@@ -129,6 +129,7 @@ function applyIp() {
 }
 
 function openCertPage() {
+  if (!getIp()) return;
   window.open(`https://${getIp()}:8002`, '_blank');
 }
 

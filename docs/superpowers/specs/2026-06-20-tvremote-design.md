@@ -92,8 +92,7 @@ The UI should evoke the physical Samsung BN59-series slim remote — matte black
 1. **Navigation ring** — the focal element. Large circular track (`100px` diameter) with directional arrows at 12/3/6/9 o'clock and an OK button in the center. Styled as a single dark disc with subtle segment separation.
 2. **Icon row** (Back / Home / Play) — three small circular buttons below the ring, matching the physical remote layout
 3. **Volume & channel rockers** — two slim vertical pill pairs (`+` / `-`) side by side with small labels above
-4. **App shortcuts** — colored brand buttons (Netflix red, Disney+ blue, etc.) in a row at the bottom
-5. **Power** — small red circle at the very top
+4. **Power** — small red circle at the very top
 6. **Connection bar** — TV IP input + Connect button + status, above the remote body
 
 ### PC window (Electron)
@@ -135,5 +134,6 @@ This step will be called out in the UI via a help note near the Connect button.
 - Auto-discovery of TV IP (user enters it manually, as today)
 - Android support
 - Packaging/distribution (no `.exe` installer, no App Store)
+- App shortcut buttons (Netflix, Disney+, etc.) — branding concerns
 - System tray icon (can be added later)
 - Always-on-top toggle (can be added later)

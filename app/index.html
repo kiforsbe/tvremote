@@ -45,71 +45,6 @@
       -webkit-app-region: no-drag;
     }
 
-    /* ── Connection bar ─────────────────────── */
-    .connect-bar {
-      width: 180px;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-
-    .connect-bar input {
-      background: var(--btn);
-      border: 1px solid #2a2a2a;
-      color: var(--text);
-      padding: 7px 10px;
-      border-radius: 8px;
-      font-size: 13px;
-      outline: none;
-      width: 100%;
-    }
-
-    .connect-bar input:focus { border-color: #444; }
-
-    .connect-btn {
-      background: var(--btn);
-      border: 1px solid #2a2a2a;
-      color: var(--text);
-      padding: 7px;
-      min-height: 44px;
-      border-radius: 8px;
-      font-size: 13px;
-      cursor: pointer;
-      text-align: center;
-      transition: background 0.12s;
-      -webkit-tap-highlight-color: transparent;
-    }
-
-    .connect-btn:hover  { background: var(--btn-hover); }
-    .connect-btn:active { background: var(--btn-active); }
-
-    #status {
-      font-size: 11px;
-      color: var(--text-dim);
-      text-align: center;
-      transition: color 0.2s;
-    }
-
-    #status.ok  { color: #27ae60; }
-    #status.err { color: #e74c3c; }
-
-    .cert-hint {
-      font-size: 10px;
-      color: #3a3a3a;
-      text-align: center;
-      line-height: 1.5;
-    }
-
-    .cert-hint button {
-      background: none;
-      border: none;
-      color: #4a4a4a;
-      font-size: 10px;
-      text-decoration: underline;
-      cursor: pointer;
-      padding: 0;
-    }
-
     /* ── Remote body ────────────────────────── */
     .remote {
       background: var(--remote-body);
@@ -144,12 +79,27 @@
     .btn:hover  { background: var(--btn-hover); }
     .btn:active { background: var(--btn-active); }
 
+    /* ── Status dot ─────────────────────────── */
+    .status-dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: #222;
+      flex-shrink: 0;
+      cursor: pointer;
+      transition: background 0.4s;
+    }
+
+    .status-dot.ok  { background: #27ae60; }
+    .status-dot.err { background: #c0392b; }
+
     /* ── Power ──────────────────────────────── */
     .power-row {
       width: 100%;
       display: flex;
-      justify-content: flex-end;
-      padding-right: 4px;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 4px;
     }
 
     .btn-power {
@@ -275,20 +225,10 @@
 </head>
 <body>
 
-  <div class="connect-bar">
-    <input id="tvip" type="text" inputmode="decimal"
-           value="192.168.50.122" placeholder="TV IP address">
-    <button class="connect-btn" onclick="connect()">Connect</button>
-    <div id="status">Not connected</div>
-    <p class="cert-hint">
-      iPhone first-time:
-      <button onclick="openCertPage()">accept TV certificate</button>
-    </p>
-  </div>
-
   <div class="remote">
 
     <div class="power-row">
+      <div class="status-dot" id="status-dot"></div>
       <button class="btn btn-power" onclick="sendKey('KEY_POWER')">⏻</button>
     </div>
 

@@ -76,6 +76,19 @@ app.whenReady().then(() => {
   win.loadFile(path.join(APP_DIR, 'index.html'));
   startHttpServer();
   registerShortcuts(win);
+
+  win.webContents.on('context-menu', () => {
+    Menu.buildFromTemplate([
+      { label: 'Set TV IP…',
+        click: () => win.webContents.executeJavaScript('promptIp()').catch(() => {}) },
+      { label: 'Reconnect',
+        click: () => win.webContents.executeJavaScript('connect()').catch(() => {}) },
+      { label: 'Accept TV Certificate',
+        click: () => win.webContents.executeJavaScript('openCertPage()').catch(() => {}) },
+      { type: 'separator' },
+      { label: 'Quit', click: () => app.quit() },
+    ]).popup({ window: win });
+  });
 });
 
 app.on('window-all-closed', () => {

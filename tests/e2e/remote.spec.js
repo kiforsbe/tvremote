@@ -11,19 +11,8 @@ test('page has correct title', async ({ page }) => {
   await expect(page).toHaveTitle('TV Remote');
 });
 
-test('shows IP input pre-filled and Connect button', async ({ page }) => {
-  await expect(page.locator('#tvip')).toBeVisible();
-  await expect(page.locator('#tvip')).toHaveValue('192.168.50.122');
-  await expect(page.locator('.connect-btn')).toBeVisible();
-  await expect(page.locator('.connect-btn')).toHaveText('Connect');
-});
-
-test('shows Not connected status initially', async ({ page }) => {
-  await expect(page.locator('#status')).toHaveText('Not connected');
-});
-
-test('shows cert hint with accept button', async ({ page }) => {
-  await expect(page.locator('.cert-hint button')).toBeVisible();
+test('status dot is present in the power row', async ({ page }) => {
+  await expect(page.locator('#status-dot')).toBeAttached();
 });
 
 test('remote body is visible', async ({ page }) => {
@@ -87,40 +76,3 @@ test('rocker buttons meet 44px height minimum', async ({ page }) => {
   }
 });
 
-test('connect button meets 44px height minimum', async ({ page }) => {
-  const box = await page.locator('.connect-btn').boundingBox();
-  expect(box.height).toBeGreaterThanOrEqual(44);
-});
-
-// ── Interaction: status text changes ──────────────────────────────────────
-
-test('blank IP — connect click does not change status', async ({ page }) => {
-  await page.locator('#tvip').fill('');
-  await page.locator('.connect-btn').click();
-  await expect(page.locator('#status')).toHaveText('Not connected');
-});
-
-test('non-blank IP — connect click changes status away from Not connected', async ({ page }) => {
-  await page.locator('#tvip').fill('10.0.0.1');
-  await page.locator('.connect-btn').click();
-  // Any of these states is valid — we are not connected to a real TV
-  const status = page.locator('#status');
-  await expect(status).not.toHaveText('Not connected', { timeout: 4000 });
-});
-
-// SKIPPED: cert hint button opens a new tab to the TV IP port 8002
-// This test is skipped because in a test environment without a real TV, the browser
-// immediately redirects the new tab to an error page (chrome-error://chromewebdata/
-// or webkit-error://) before the URL containing '192.168.50.122:8002' can be captured.
-// The window.open() call does work correctly — it is a browser-level connection refusal
-// that replaces the URL. Verified manually that openCertPage() calls window.open with
-// the correct https://<ip>:8002 URL.
-test.skip('cert hint button opens a new tab to the TV IP port 8002', async ({ page, context }) => {
-  await page.locator('#tvip').fill('192.168.50.122');
-  const [newPage] = await Promise.all([
-    context.waitForEvent('page'),
-    page.locator('.cert-hint button').click(),
-  ]);
-  expect(newPage.url()).toContain('192.168.50.122:8002');
-  await newPage.close();
-});

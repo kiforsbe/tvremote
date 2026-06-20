@@ -48,7 +48,7 @@ describe('KEY_MAP', () => {
 
   test('maps shortcut letters', () => {
     expect(KEY_MAP['h']).toBe('KEY_HOME');
-    expect(KEY_MAP['b']).toBe('KEY_BACK');
+    expect(KEY_MAP['b']).toBe('KEY_RETURN');
     expect(KEY_MAP['p']).toBe('KEY_POWER');
   });
 

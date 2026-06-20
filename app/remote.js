@@ -6,7 +6,7 @@ const KEY_MAP = {
   Enter:      'KEY_ENTER',
   ' ':        'KEY_ENTER',
   h:          'KEY_HOME',
-  b:          'KEY_BACK',
+  b:          'KEY_RETURN',
   m:          'KEY_MENU',
   '+':        'KEY_VOLUP',
   '-':        'KEY_VOLDOWN',

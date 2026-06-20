@@ -183,15 +183,34 @@
     .btn-power:hover  { background: var(--power-hover); }
     .btn-power:active { background: var(--power-red); }
 
-    /* ── Top row (123 / color) ──────────────── */
-    .row { display: flex; gap: 8px; }
+    /* ── Top row (123 + colour dots) ───────── */
+    .row { display: flex; gap: 6px; align-items: center; }
 
     .btn-sm {
-      width: 60px;
-      min-height: 44px;
+      width: 52px;
+      min-height: 36px;
       border-radius: 8px;
       font-size: 12px;
     }
+
+    .btn-color {
+      width: 16px;
+      height: 16px;
+      min-height: unset;
+      border-radius: 50%;
+      padding: 0;
+      flex-shrink: 0;
+    }
+
+    .btn-red    { background: #e74c3c; }
+    .btn-green  { background: #2ecc71; }
+    .btn-yellow { background: #f1c40f; }
+    .btn-blue   { background: #3498db; }
+
+    .btn-red:hover    { background: #c0392b; }
+    .btn-green:hover  { background: #27ae60; }
+    .btn-yellow:hover { background: #d4a90e; }
+    .btn-blue:hover   { background: #2980b9; }
 
     /* ── Navigation ring ────────────────────── */
     .nav-ring {
@@ -316,8 +335,11 @@
     </div>
 
     <div class="row">
-      <button class="btn btn-sm" data-key="KEY_123"   onclick="sendKey('KEY_123')">123</button>
-      <button class="btn btn-sm" data-key="KEY_COLOR" onclick="sendKey('KEY_COLOR')">⬤⬤⬤</button>
+      <button class="btn btn-sm" data-key="KEY_123" onclick="sendKey('KEY_123')">123</button>
+      <button class="btn btn-color btn-red"    data-key="KEY_RED"    onclick="sendKey('KEY_RED')"></button>
+      <button class="btn btn-color btn-green"  data-key="KEY_GREEN"  onclick="sendKey('KEY_GREEN')"></button>
+      <button class="btn btn-color btn-yellow" data-key="KEY_YELLOW" onclick="sendKey('KEY_YELLOW')"></button>
+      <button class="btn btn-color btn-blue"   data-key="KEY_BLUE"   onclick="sendKey('KEY_BLUE')"></button>
     </div>
 
     <div class="nav-ring">
@@ -330,7 +352,7 @@
     </div>
 
     <div class="icon-row">
-      <button class="btn btn-icon" data-key="KEY_BACK" title="Back"       onclick="sendKey('KEY_BACK')">↩</button>
+      <button class="btn btn-icon" data-key="KEY_RETURN" title="Back" onclick="sendKey('KEY_RETURN')">↩</button>
       <button class="btn btn-icon" data-key="KEY_HOME" title="Home"       onclick="sendKey('KEY_HOME')">⌂</button>
       <button class="btn btn-icon" data-key="KEY_PLAY" title="Play/Pause" onclick="sendKey('KEY_PLAY')">⏯</button>
     </div>

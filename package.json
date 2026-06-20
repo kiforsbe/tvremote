@@ -2,6 +2,7 @@
   "name": "tvremote",
   "version": "1.0.0",
   "description": "Samsung TV remote — Electron (Windows) + PWA (iPhone)",
+  "author": "Kim Forsberg",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
@@ -28,7 +29,8 @@
     "png-to-ico": "^3.0.1"
   },
   "allowScripts": {
-    "electron@31.7.7": true
+    "electron@31.7.7": true,
+    "electron-builder": true
   },
   "build": {
     "appId": "com.kiforsbe.tvremote",

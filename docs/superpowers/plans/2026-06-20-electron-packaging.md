@@ -6,7 +6,7 @@
 
 **Architecture:** `electron-builder` reads a `"build"` config block in `package.json` and bundles the app source files into a self-contained Electron distribution. A Windows `.ico` file is generated from the existing source icon using `png-to-ico` (packing multiple sizes) and committed to `build/icon.ico`. No changes to app logic or project structure.
 
-**Tech Stack:** electron-builder ^25, png-to-ico ^2, jimp (already installed), NSIS (bundled with electron-builder on Windows)
+**Tech Stack:** electron-builder ^26, png-to-ico ^3, jimp (already installed), NSIS (bundled with electron-builder on Windows)
 
 ## Global Constraints
 
@@ -79,7 +79,7 @@ Full file content:
 
 ```js
 const Jimp     = require('jimp');
-const pngToIco = require('png-to-ico');
+const pngToIco = require('png-to-ico').default;
 const path     = require('path');
 const fs       = require('fs');
 const os       = require('os');

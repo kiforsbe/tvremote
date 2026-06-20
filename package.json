@@ -6,6 +6,8 @@
   "scripts": {
     "start": "electron .",
     "icons": "node scripts/generate-icons.js",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder",
     "test:unit": "jest tests/unit",
     "test:blackbox": "jest tests/blackbox --testTimeout=10000",
     "test:e2e": "playwright test",
@@ -27,5 +29,33 @@
   },
   "allowScripts": {
     "electron@31.7.7": true
+  },
+  "build": {
+    "appId": "com.kiforsbe.tvremote",
+    "productName": "TV Remote",
+    "icon": "build/icon.ico",
+    "files": [
+      "main.js",
+      "preload.js",
+      "dialog-preload.js",
+      "ip-dialog.html",
+      "app/**"
+    ],
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "target": [
+        { "target": "nsis",     "arch": ["x64"] },
+        { "target": "portable", "arch": ["x64"] }
+      ]
+    },
+    "nsis": {
+      "oneClick": true,
+      "perMachine": false,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "TV Remote"
+    }
   }
 }

@@ -47,7 +47,7 @@ function saveMediaApps(apps) {
 
 function buildAppLaunchCommand(appId, metaTag) {
   const params = { id: appId };
-  if (metaTag) params.metaTag = metaTag;
+  if (metaTag != null) params.metaTag = metaTag;
   return JSON.stringify({ method: 'ms.application.start', params });
 }
 

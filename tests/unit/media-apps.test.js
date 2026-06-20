@@ -82,6 +82,12 @@ describe('buildAppLaunchCommand', () => {
     const result = JSON.parse(buildAppLaunchCommand('11101200001', null));
     expect('metaTag' in result.params).toBe(false);
   });
+
+  test('includes metaTag when it is an empty string', () => {
+    const result = JSON.parse(buildAppLaunchCommand('111299001912', ''));
+    expect('metaTag' in result.params).toBe(true);
+    expect(result.params.metaTag).toBe('');
+  });
 });
 
 describe('parseYouTubeVideoId', () => {

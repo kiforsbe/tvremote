@@ -63,6 +63,7 @@ function openCertPage() {
 }
 
 document.addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT') return;
   const key = KEY_MAP[e.key];
   if (key) { e.preventDefault(); sendKey(key); }
 });

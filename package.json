@@ -19,9 +19,11 @@
   "devDependencies": {
     "@playwright/test": "^1.44.0",
     "electron": "^31.7.7",
+    "electron-builder": "^26.15.3",
     "jest": "^29.0.0",
     "jest-environment-jsdom": "^30.4.1",
-    "jimp": "^0.22.12"
+    "jimp": "^0.22.12",
+    "png-to-ico": "^3.0.1"
   },
   "allowScripts": {
     "electron@31.7.7": true

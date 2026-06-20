@@ -63,10 +63,11 @@ app.whenReady().then(() => {
   Menu.setApplicationMenu(null);
 
   const win = new BrowserWindow({
-    width:     WIN_W,
-    height:    WIN_H,
-    resizable: false,
-    frame:     false,
+    width:       WIN_W,
+    height:      WIN_H,
+    resizable:   false,
+    frame:       false,
+    transparent: true,
     webPreferences: {
       nodeIntegration:  false,
       contextIsolation: true,

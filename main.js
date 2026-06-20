@@ -1,4 +1,4 @@
-const { app, BrowserWindow, globalShortcut } = require('electron');
+const { app, BrowserWindow, globalShortcut, Menu } = require('electron');
 const http = require('http');
 const fs   = require('fs');
 const path = require('path');
@@ -60,10 +60,13 @@ function registerShortcuts(win) {
 }
 
 app.whenReady().then(() => {
+  Menu.setApplicationMenu(null);
+
   const win = new BrowserWindow({
     width:     WIN_W,
     height:    WIN_H,
     resizable: false,
+    frame:     false,
     webPreferences: {
       nodeIntegration:  false,
       contextIsolation: true,

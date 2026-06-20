@@ -36,10 +36,16 @@ function setStatus(state) {
 }
 
 function getIp() {
-  return localStorage.getItem('tvip') || '192.168.50.122';
+  return localStorage.getItem('tvip');
+}
+
+function setNeedsConfig(on) {
+  const btn = document.getElementById('btn-settings');
+  if (btn) btn.classList.toggle('needs-config', on);
 }
 
 function connect() {
+  if (!getIp()) return;
   if (ws) { ws.close(); ws = null; }
   const ip    = getIp();
   const token = localStorage.getItem('tvtoken');
@@ -86,8 +92,12 @@ function toggleNumpad() {
 
 function openSettings() {
   if (window.electronAPI) {
-    window.electronAPI.openIpDialog(getIp()).then(ip => {
-      if (ip) { localStorage.setItem('tvip', ip); connect(); }
+    window.electronAPI.openIpDialog(getIp() || '').then(ip => {
+      if (ip) {
+        localStorage.setItem('tvip', ip);
+        setNeedsConfig(false);
+        connect();
+      }
     });
     return;
   }
@@ -95,7 +105,7 @@ function openSettings() {
   const row  = document.getElementById('ip-row');
   const gear = document.getElementById('btn-settings');
   if (row.hidden) {
-    document.getElementById('tvip').value = getIp();
+    document.getElementById('tvip').value = getIp() || '';
     row.hidden = false;
     gear.classList.add('open');
     document.getElementById('tvip').focus();
@@ -111,6 +121,7 @@ function applyIp() {
   if (ip) {
     if (ip !== getIp()) localStorage.removeItem('tvtoken');
     localStorage.setItem('tvip', ip);
+    setNeedsConfig(false);
     connect();
   }
   document.getElementById('ip-row').hidden = true;
@@ -129,7 +140,12 @@ document.addEventListener('keydown', e => {
 
 document.addEventListener('DOMContentLoaded', () => {
   setStatus('err');
-  connect();
+  if (!getIp()) {
+    setNeedsConfig(true);
+    openSettings();
+  } else {
+    connect();
+  }
 
   const dot = document.getElementById('status-dot');
   if (dot) dot.addEventListener('click', () => {

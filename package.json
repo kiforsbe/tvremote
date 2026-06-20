@@ -41,6 +41,7 @@
       "preload.js",
       "dialog-preload.js",
       "ip-dialog.html",
+      "app-manager-preload.js",
       "app/**"
     ],
     "directories": {

@@ -189,9 +189,43 @@ ipcMain.on('set-ignore-mouse-events', (event, ignore) => {
   if (w) w.setIgnoreMouseEvents(ignore, { forward: true });
 });
 
-ipcMain.handle('open-app-manager', (_event, _appsJson) => {
-  // stub — replaced in Task 6
-  return null;
+ipcMain.handle('open-app-manager', (event, appsJson) => {
+  const mainWin = BrowserWindow.fromWebContents(event.sender);
+  return new Promise(resolve => {
+    const dlg = new BrowserWindow({
+      width:     420,
+      height:    560,
+      parent:    mainWin,
+      modal:     true,
+      frame:     false,
+      resizable: false,
+      backgroundColor: '#1f1f1f',
+      webPreferences: {
+        nodeIntegration:  false,
+        contextIsolation: true,
+        preload:          path.join(__dirname, 'app-manager-preload.js'),
+      },
+    });
+
+    try { dlg.setBackgroundMaterial('mica'); } catch (_) {}
+
+    dlg.loadFile(
+      path.join(__dirname, 'app', 'app-manager.html'),
+      { query: { apps: appsJson } }
+    );
+
+    const onSave   = (_, json) => { cleanup(); dlg.close(); resolve(json); };
+    const onCancel = ()        => { cleanup(); dlg.close(); resolve(null); };
+
+    function cleanup() {
+      ipcMain.removeListener('app-manager-save',   onSave);
+      ipcMain.removeListener('app-manager-cancel', onCancel);
+    }
+
+    ipcMain.once('app-manager-save',   onSave);
+    ipcMain.once('app-manager-cancel', onCancel);
+    dlg.on('closed', () => { cleanup(); resolve(null); });
+  });
 });
 
 app.whenReady().then(() => {

@@ -2,6 +2,7 @@ const { app, BrowserWindow, globalShortcut, Menu, ipcMain, session } = require('
 const http = require('http');
 const fs   = require('fs');
 const path = require('path');
+const dgram = require('dgram');
 
 const APP_DIR   = path.join(__dirname, 'app');
 const HTTP_PORT = 3000;
@@ -55,6 +56,91 @@ function registerShortcuts(win) {
   }
 }
 
+// ── TV Discovery ────────────────────────────────────────────────────────────
+
+const SSDP_ADDR    = '239.255.255.250';
+const SSDP_PORT    = 1900;
+const SSDP_TIMEOUT = 4000;
+
+const SSDP_MSG = Buffer.from([
+  'M-SEARCH * HTTP/1.1',
+  `HOST: ${SSDP_ADDR}:${SSDP_PORT}`,
+  'MAN: "ssdp:discover"',
+  'MX: 3',
+  'ST: urn:samsung.com:device:RemoteControlReceiver:1',
+  '', '',
+].join('\r\n'));
+
+function fetchDeviceName(location) {
+  return new Promise((resolve, reject) => {
+    try {
+      const url     = new URL(location);
+      const options = {
+        hostname: url.hostname,
+        port:     Number(url.port) || 80,
+        path:     url.pathname + url.search,
+        timeout:  2000,
+      };
+      const req = http.get(options, res => {
+        let data = '';
+        res.on('data', chunk => { data += chunk; });
+        res.on('end', () => {
+          const m = data.match(/<friendlyName>([^<]+)<\/friendlyName>/);
+          resolve(m ? m[1].trim() : null);
+        });
+      });
+      req.on('timeout', () => { req.destroy(); reject(new Error('timeout')); });
+      req.on('error', reject);
+    } catch (e) {
+      reject(e);
+    }
+  });
+}
+
+function discoverTvs() {
+  return new Promise(resolve => {
+    const found   = new Map();  // ip → {name, ip}
+    const fetches = [];
+
+    const sock = dgram.createSocket({ type: 'udp4', reuseAddr: true });
+
+    sock.on('error', () => {
+      try { sock.close(); } catch (_) {}
+      resolve([...found.values()]);
+    });
+
+    sock.on('message', (msg, rinfo) => {
+      const ip = rinfo.address;
+      if (found.has(ip)) return;
+      found.set(ip, { name: ip, ip });
+
+      const locMatch = msg.toString().match(/^LOCATION:\s*(.+)$/im);
+      if (locMatch) {
+        const p = fetchDeviceName(locMatch[1].trim())
+          .then(name => { if (name) found.set(ip, { name, ip }); })
+          .catch(() => {});
+        fetches.push(p);
+      }
+    });
+
+    sock.bind(0, () => {
+      try {
+        sock.addMembership(SSDP_ADDR);
+        sock.send(SSDP_MSG, 0, SSDP_MSG.length, SSDP_PORT, SSDP_ADDR);
+      } catch (e) {
+        try { sock.close(); } catch (_) {}
+        resolve([]);
+      }
+    });
+
+    setTimeout(async () => {
+      try { sock.close(); } catch (_) {}
+      await Promise.allSettled(fetches);
+      resolve([...found.values()]);
+    }, SSDP_TIMEOUT);
+  });
+}
+
 ipcMain.handle('open-ip-dialog', (event, currentIp) => {
   const mainWin = BrowserWindow.fromWebContents(event.sender);
   return new Promise(resolve => {
@@ -95,6 +181,8 @@ ipcMain.handle('set-numpad', (event, open) => {
   const w = BrowserWindow.fromWebContents(event.sender);
   if (w) w.setSize(WIN_W, open ? WIN_H_NUMPAD : WIN_H);
 });
+
+ipcMain.handle('discover-tvs', discoverTvs);
 
 app.whenReady().then(() => {
   // cert_verify_proc_builtin rejects Samsung TV's self-signed cert before

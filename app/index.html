@@ -367,98 +367,311 @@
       color: #ffd166;
       animation: settings-pulse 1.5s ease-in-out infinite;
     }
+
+    /* ── Layout wrapper ────────────────────────── */
+    body {
+      align-items: flex-end;
+      padding-right: max(40px, env(safe-area-inset-right));
+      -webkit-app-region: no-drag;
+      gap: 0;
+    }
+
+    .remote-container {
+      display: flex;
+      flex-direction: row;
+      align-items: stretch;
+      position: relative;
+    }
+
+    .remote {
+      -webkit-app-region: drag;
+    }
+
+    /* ── Drawer tab ─────────────────────────────── */
+    .drawer-tab {
+      width: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #252525;
+      border-radius: 8px 0 0 8px;
+      color: var(--text-dim);
+      font-size: 9px;
+      cursor: pointer;
+      align-self: center;
+      height: 56px;
+      flex-shrink: 0;
+      transition: color 0.15s, background 0.15s;
+      -webkit-app-region: no-drag;
+      user-select: none;
+    }
+
+    .drawer-tab:hover {
+      background: #2e2e2e;
+      color: var(--text);
+    }
+
+    /* ── Drawer panel ───────────────────────────── */
+    .drawer-panel {
+      width: 0;
+      overflow: hidden;
+      transition: width 0.22s ease;
+      background: #141414;
+      border-radius: 14px 0 0 14px;
+      display: flex;
+      flex-direction: column;
+      align-self: stretch;
+      margin-top: 28px;
+      margin-bottom: 28px;
+      box-shadow: -4px 0 20px rgba(0,0,0,0.5);
+      -webkit-app-region: no-drag;
+    }
+
+    .remote-container.drawer-open .drawer-panel {
+      width: 140px;
+    }
+
+    .drawer-apps {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding: 8px 0;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .drawer-app-row {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      padding: 0 4px;
+    }
+
+    .drawer-app-btn {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 6px;
+      background: transparent;
+      border: none;
+      border-radius: 8px;
+      color: var(--text);
+      font-size: 12px;
+      cursor: pointer;
+      text-align: left;
+      transition: background 0.12s;
+      -webkit-tap-highlight-color: transparent;
+      min-width: 0;
+      overflow: hidden;
+    }
+
+    .drawer-app-btn:hover  { background: var(--btn-hover); }
+    .drawer-app-btn:active { background: var(--btn-active); }
+
+    .app-icon { font-size: 14px; flex-shrink: 0; width: 18px; text-align: center; }
+    .app-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 11px; }
+
+    .drawer-order-btn {
+      width: 18px;
+      height: 22px;
+      background: transparent;
+      border: none;
+      color: var(--text-dim);
+      font-size: 10px;
+      cursor: pointer;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+      flex-shrink: 0;
+      transition: color 0.1s, background 0.1s;
+    }
+    .drawer-order-btn:hover:not(:disabled)  { color: var(--text); background: var(--btn-hover); }
+    .drawer-order-btn:disabled { opacity: 0.2; cursor: default; }
+
+    .drawer-manage-btn {
+      width: 100%;
+      padding: 8px 0;
+      background: transparent;
+      border: none;
+      border-top: 1px solid rgba(255,255,255,0.06);
+      color: var(--text-dim);
+      font-size: 11px;
+      cursor: pointer;
+      transition: color 0.12s, background 0.12s;
+      flex-shrink: 0;
+    }
+    .drawer-manage-btn:hover { color: var(--text); background: rgba(255,255,255,0.04); }
+
+    .drawer-empty {
+      font-size: 11px;
+      color: var(--text-dim);
+      text-align: center;
+      padding: 16px 8px;
+    }
+
+    /* ── Pinned apps row ────────────────────────── */
+    .pinned-apps {
+      display: flex;
+      gap: 6px;
+      justify-content: center;
+    }
+
+    .pinned-app-btn {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      font-size: 16px;
+    }
+
+    /* ── YouTube inline input ───────────────────── */
+    .yt-input-row {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      padding: 4px 6px;
+      width: 100%;
+    }
+
+    .yt-input {
+      flex: 1;
+      min-width: 0;
+      background: var(--btn);
+      border: 1px solid #2a2a2a;
+      color: var(--text);
+      padding: 5px 7px;
+      border-radius: 6px;
+      font-size: 10px;
+      outline: none;
+      width: 100%;
+    }
+    .yt-input:focus { border-color: #555; }
+
+    .yt-input-actions {
+      display: flex;
+      gap: 4px;
+    }
+
+    .yt-confirm-btn {
+      width: 28px;
+      height: 24px;
+      border-radius: 6px;
+      font-size: 10px;
+      flex-shrink: 0;
+    }
+
+    .yt-input-err {
+      font-size: 9px;
+      color: #e74c3c;
+    }
   </style>
 </head>
 <body>
 
-  <div class="remote">
+  <div class="remote-container" id="remote-container">
 
-    <div class="power-row">
-      <div class="status-dot" id="status-dot"></div>
-      <button class="btn-settings" id="btn-settings" onclick="openSettings()" title="Set TV IP">⚙</button>
-      <button class="btn-src" data-key="KEY_SOURCE" onclick="sendKey('KEY_SOURCE')" title="Source/Input">SRC</button>
-      <button class="btn btn-power" data-key="KEY_POWER" onclick="sendKey('KEY_POWER')">⏻</button>
+    <div class="drawer-panel" id="drawer-panel">
+      <div class="drawer-apps" id="drawer-apps"></div>
+      <button class="drawer-manage-btn" id="drawer-manage-btn">⚙ Manage</button>
     </div>
 
-    <div class="ip-row" id="ip-row" hidden>
-      <input id="tvip" type="text" inputmode="decimal" placeholder="192.168.x.x">
-      <button class="btn btn-apply" onclick="applyIp()">▶</button>
-    </div>
+    <div class="drawer-tab" id="drawer-tab">‹</div>
 
-    <div class="row">
-      <button class="btn btn-sm" data-key="KEY_GUIDE" onclick="sendKey('KEY_GUIDE')">GUIDE</button>
-      <button class="btn btn-sm" data-key="KEY_123"   onclick="toggleNumpad()">123</button>
-    </div>
+    <div class="remote">
 
-    <div class="row">
-      <button class="btn btn-color btn-red"    data-key="KEY_RED"    onclick="sendKey('KEY_RED')"></button>
-      <button class="btn btn-color btn-green"  data-key="KEY_GREEN"  onclick="sendKey('KEY_GREEN')"></button>
-      <button class="btn btn-color btn-yellow" data-key="KEY_YELLOW" onclick="sendKey('KEY_YELLOW')"></button>
-      <button class="btn btn-color btn-blue"   data-key="KEY_BLUE"   onclick="sendKey('KEY_BLUE')"></button>
-    </div>
-
-    <div class="numpad" id="numpad" hidden>
-      <div class="numpad-row">
-        <button class="btn-digit" data-key="KEY_1" onclick="sendKey('KEY_1')">1</button>
-        <button class="btn-digit" data-key="KEY_2" onclick="sendKey('KEY_2')">2</button>
-        <button class="btn-digit" data-key="KEY_3" onclick="sendKey('KEY_3')">3</button>
-        <button class="btn-digit" data-key="KEY_4" onclick="sendKey('KEY_4')">4</button>
-        <button class="btn-digit" data-key="KEY_5" onclick="sendKey('KEY_5')">5</button>
+      <div class="power-row">
+        <div class="status-dot" id="status-dot"></div>
+        <button class="btn-settings" id="btn-settings" onclick="openSettings()" title="Set TV IP">⚙</button>
+        <button class="btn-src" data-key="KEY_SOURCE" onclick="sendKey('KEY_SOURCE')" title="Source/Input">SRC</button>
+        <button class="btn btn-power" data-key="KEY_POWER" onclick="sendKey('KEY_POWER')">⏻</button>
       </div>
-      <div class="numpad-row">
-        <button class="btn-digit" data-key="KEY_6" onclick="sendKey('KEY_6')">6</button>
-        <button class="btn-digit" data-key="KEY_7" onclick="sendKey('KEY_7')">7</button>
-        <button class="btn-digit" data-key="KEY_8" onclick="sendKey('KEY_8')">8</button>
-        <button class="btn-digit" data-key="KEY_9" onclick="sendKey('KEY_9')">9</button>
-        <button class="btn-digit" data-key="KEY_0" onclick="sendKey('KEY_0')">0</button>
+
+      <div class="ip-row" id="ip-row" hidden>
+        <input id="tvip" type="text" inputmode="decimal" placeholder="192.168.x.x">
+        <button class="btn btn-apply" onclick="applyIp()">▶</button>
       </div>
-    </div>
 
-    <div class="nav-ring">
-      <div class="nav-track"></div>
-      <button class="nav-dir nav-up"    data-key="KEY_UP"    onclick="sendKey('KEY_UP')">△</button>
-      <button class="nav-dir nav-down"  data-key="KEY_DOWN"  onclick="sendKey('KEY_DOWN')">▽</button>
-      <button class="nav-dir nav-left"  data-key="KEY_LEFT"  onclick="sendKey('KEY_LEFT')">◁</button>
-      <button class="nav-dir nav-right" data-key="KEY_RIGHT" onclick="sendKey('KEY_RIGHT')">▷</button>
-      <button class="nav-ok"            data-key="KEY_ENTER" onclick="sendKey('KEY_ENTER')">OK</button>
-    </div>
-
-    <div class="icon-row">
-      <button class="btn btn-icon" data-key="KEY_RETURN" title="Back"       onclick="sendKey('KEY_RETURN')" style="font-size:18px">↩</button>
-      <button class="btn btn-icon" data-key="KEY_HOME"   title="Home"       onclick="sendKey('KEY_HOME')"   style="font-size:18px">⌂</button>
-      <button class="btn btn-icon" data-key="KEY_PLAY"   title="Play/Pause" onclick="sendKey('KEY_PLAY')"   style="font-size:18px">⏵</button>
-    </div>
-
-    <div class="icon-row">
-      <button class="btn btn-icon" data-key="KEY_REWIND" title="Rewind"       onclick="sendKey('KEY_REWIND')">⏪</button>
-      <button class="btn btn-icon" data-key="KEY_STOP"   title="Stop"         onclick="sendKey('KEY_STOP')">⏹</button>
-      <button class="btn btn-icon" data-key="KEY_FF"     title="Fast Forward" onclick="sendKey('KEY_FF')">⏩</button>
-    </div>
-
-    <div class="icon-row">
-      <button class="btn btn-icon" data-key="KEY_EXIT"    title="Exit"     onclick="sendKey('KEY_EXIT')"    style="font-size:11px;font-weight:700;letter-spacing:.5px">EXIT</button>
-      <button class="btn btn-icon" data-key="KEY_INFO"    title="Info"     onclick="sendKey('KEY_INFO')"    style="font-size:18px">ⓘ</button>
-      <button class="btn btn-icon" data-key="KEY_CAPTION" title="Captions" onclick="sendKey('KEY_CAPTION')" style="font-size:12px;font-weight:700">CC</button>
-    </div>
-
-    <div class="rockers">
-      <div class="rocker">
-        <span class="rocker-label">VOL</span>
-        <button class="btn btn-rocker" data-key="KEY_VOLUP"   onclick="sendKey('KEY_VOLUP')">+</button>
-        <button class="btn btn-rocker" data-key="KEY_VOLDOWN" onclick="sendKey('KEY_VOLDOWN')">−</button>
+      <div class="row">
+        <button class="btn btn-sm" data-key="KEY_GUIDE" onclick="sendKey('KEY_GUIDE')">GUIDE</button>
+        <button class="btn btn-sm" data-key="KEY_123"   onclick="toggleNumpad()">123</button>
       </div>
-      <div class="rocker rocker-mute">
-        <span class="rocker-label">MUTE</span>
-        <button class="btn btn-icon" data-key="KEY_MUTE" onclick="sendKey('KEY_MUTE')" title="Mute">🔇</button>
-      </div>
-      <div class="rocker">
-        <span class="rocker-label">CH</span>
-        <button class="btn btn-rocker" data-key="KEY_CHUP"   onclick="sendKey('KEY_CHUP')">⌃</button>
-        <button class="btn btn-rocker" data-key="KEY_CHDOWN" onclick="sendKey('KEY_CHDOWN')">⌄</button>
-      </div>
-    </div>
 
-  </div>
+      <div class="row">
+        <button class="btn btn-color btn-red"    data-key="KEY_RED"    onclick="sendKey('KEY_RED')"></button>
+        <button class="btn btn-color btn-green"  data-key="KEY_GREEN"  onclick="sendKey('KEY_GREEN')"></button>
+        <button class="btn btn-color btn-yellow" data-key="KEY_YELLOW" onclick="sendKey('KEY_YELLOW')"></button>
+        <button class="btn btn-color btn-blue"   data-key="KEY_BLUE"   onclick="sendKey('KEY_BLUE')"></button>
+      </div>
+
+      <div class="numpad" id="numpad" hidden>
+        <div class="numpad-row">
+          <button class="btn-digit" data-key="KEY_1" onclick="sendKey('KEY_1')">1</button>
+          <button class="btn-digit" data-key="KEY_2" onclick="sendKey('KEY_2')">2</button>
+          <button class="btn-digit" data-key="KEY_3" onclick="sendKey('KEY_3')">3</button>
+          <button class="btn-digit" data-key="KEY_4" onclick="sendKey('KEY_4')">4</button>
+          <button class="btn-digit" data-key="KEY_5" onclick="sendKey('KEY_5')">5</button>
+        </div>
+        <div class="numpad-row">
+          <button class="btn-digit" data-key="KEY_6" onclick="sendKey('KEY_6')">6</button>
+          <button class="btn-digit" data-key="KEY_7" onclick="sendKey('KEY_7')">7</button>
+          <button class="btn-digit" data-key="KEY_8" onclick="sendKey('KEY_8')">8</button>
+          <button class="btn-digit" data-key="KEY_9" onclick="sendKey('KEY_9')">9</button>
+          <button class="btn-digit" data-key="KEY_0" onclick="sendKey('KEY_0')">0</button>
+        </div>
+      </div>
+
+      <div class="pinned-apps" id="pinned-apps"></div>
+
+      <div class="nav-ring">
+        <div class="nav-track"></div>
+        <button class="nav-dir nav-up"    data-key="KEY_UP"    onclick="sendKey('KEY_UP')">△</button>
+        <button class="nav-dir nav-down"  data-key="KEY_DOWN"  onclick="sendKey('KEY_DOWN')">▽</button>
+        <button class="nav-dir nav-left"  data-key="KEY_LEFT"  onclick="sendKey('KEY_LEFT')">◁</button>
+        <button class="nav-dir nav-right" data-key="KEY_RIGHT" onclick="sendKey('KEY_RIGHT')">▷</button>
+        <button class="nav-ok"            data-key="KEY_ENTER" onclick="sendKey('KEY_ENTER')">OK</button>
+      </div>
+
+      <div class="icon-row">
+        <button class="btn btn-icon" data-key="KEY_RETURN" title="Back"       onclick="sendKey('KEY_RETURN')" style="font-size:18px">↩</button>
+        <button class="btn btn-icon" data-key="KEY_HOME"   title="Home"       onclick="sendKey('KEY_HOME')"   style="font-size:18px">⌂</button>
+        <button class="btn btn-icon" data-key="KEY_PLAY"   title="Play/Pause" onclick="sendKey('KEY_PLAY')"   style="font-size:18px">⏵</button>
+      </div>
+
+      <div class="icon-row">
+        <button class="btn btn-icon" data-key="KEY_REWIND" title="Rewind"       onclick="sendKey('KEY_REWIND')">⏪</button>
+        <button class="btn btn-icon" data-key="KEY_STOP"   title="Stop"         onclick="sendKey('KEY_STOP')">⏹</button>
+        <button class="btn btn-icon" data-key="KEY_FF"     title="Fast Forward" onclick="sendKey('KEY_FF')">⏩</button>
+      </div>
+
+      <div class="icon-row">
+        <button class="btn btn-icon" data-key="KEY_EXIT"    title="Exit"     onclick="sendKey('KEY_EXIT')"    style="font-size:11px;font-weight:700;letter-spacing:.5px">EXIT</button>
+        <button class="btn btn-icon" data-key="KEY_INFO"    title="Info"     onclick="sendKey('KEY_INFO')"    style="font-size:18px">ⓘ</button>
+        <button class="btn btn-icon" data-key="KEY_CAPTION" title="Captions" onclick="sendKey('KEY_CAPTION')" style="font-size:12px;font-weight:700">CC</button>
+      </div>
+
+      <div class="rockers">
+        <div class="rocker">
+          <span class="rocker-label">VOL</span>
+          <button class="btn btn-rocker" data-key="KEY_VOLUP"   onclick="sendKey('KEY_VOLUP')">+</button>
+          <button class="btn btn-rocker" data-key="KEY_VOLDOWN" onclick="sendKey('KEY_VOLDOWN')">−</button>
+        </div>
+        <div class="rocker rocker-mute">
+          <span class="rocker-label">MUTE</span>
+          <button class="btn btn-icon" data-key="KEY_MUTE" onclick="sendKey('KEY_MUTE')" title="Mute">🔇</button>
+        </div>
+        <div class="rocker">
+          <span class="rocker-label">CH</span>
+          <button class="btn btn-rocker" data-key="KEY_CHUP"   onclick="sendKey('KEY_CHUP')">⌃</button>
+          <button class="btn btn-rocker" data-key="KEY_CHDOWN" onclick="sendKey('KEY_CHDOWN')">⌄</button>
+        </div>
+      </div>
+
+    </div><!-- /.remote -->
+
+  </div><!-- /.remote-container -->
 
   <script src="remote.js"></script>
 </body>

@@ -154,7 +154,6 @@
       const enabledIds = new Set(enabledApps.map(a => a.id));
       const catalogIds = new Set(CATALOG.map(a => a.id));
       const disabledCatalog = CATALOG.filter(a => !enabledIds.has(a.id));
-      const customApps = enabledApps.filter(a => !catalogIds.has(a.id));
       // disabled custom apps are not shown (they were removed)
       return [
         ...enabledApps.map(a => ({ ...a, enabled: true })),

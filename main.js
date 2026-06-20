@@ -214,8 +214,8 @@ ipcMain.handle('open-app-manager', (event, appsJson) => {
       { query: { apps: appsJson } }
     );
 
-    const onSave   = (_, json) => { cleanup(); dlg.close(); resolve(json); };
-    const onCancel = ()        => { cleanup(); dlg.close(); resolve(null); };
+    const onSave   = (_, json) => { cleanup(); resolve(json);  dlg.close(); };
+    const onCancel = ()        => { cleanup(); resolve(null); dlg.close(); };
 
     function cleanup() {
       ipcMain.removeListener('app-manager-save',   onSave);

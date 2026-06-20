@@ -41,15 +41,20 @@ function getIp() {
 
 function connect() {
   if (ws) { ws.close(); ws = null; }
-  const ip = getIp();
-  const url =
-    `wss://${ip}:8002/api/v2/channels/samsung.remote.control?name=${btoa('TVRemote')}`;
+  const ip    = getIp();
+  const token = localStorage.getItem('tvtoken');
+  const query = token ? `&token=${token}` : '';
+  const url   =
+    `wss://${ip}:8002/api/v2/channels/samsung.remote.control?name=${btoa('TVRemote')}${query}`;
   ws = new WebSocket(url);
   ws.onopen = () => setStatus('connecting');
   ws.onmessage = e => {
     try {
       const msg = JSON.parse(e.data);
-      if (msg.event === 'ms.channel.connect') setStatus('ok');
+      if (msg.event === 'ms.channel.connect') {
+        if (msg.data?.token) localStorage.setItem('tvtoken', msg.data.token);
+        setStatus('ok');
+      }
     } catch (_) {}
   };
   ws.onerror = () => setStatus('err');
@@ -103,7 +108,11 @@ function openSettings() {
 
 function applyIp() {
   const ip = document.getElementById('tvip').value.trim();
-  if (ip) { localStorage.setItem('tvip', ip); connect(); }
+  if (ip) {
+    if (ip !== getIp()) localStorage.removeItem('tvtoken');
+    localStorage.setItem('tvip', ip);
+    connect();
+  }
   document.getElementById('ip-row').hidden = true;
   document.getElementById('btn-settings').classList.remove('open');
 }

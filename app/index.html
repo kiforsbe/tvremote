@@ -288,6 +288,14 @@
       font-size: 18px;
       font-weight: 300;
     }
+
+    /* ── Last-pressed flash ─────────────────── */
+    @keyframes btn-flash {
+      0%   { box-shadow: inset 0 0 0 100px rgba(255,255,255,0.28); }
+      100% { box-shadow: inset 0 0 0 100px rgba(255,255,255,0);    }
+    }
+
+    .btn-flash { animation: btn-flash 0.8s ease-out; }
   </style>
 </head>
 <body>
@@ -297,7 +305,7 @@
     <div class="power-row">
       <div class="status-dot" id="status-dot"></div>
       <button class="btn-settings" id="btn-settings" onclick="openSettings()" title="Set TV IP">⚙</button>
-      <button class="btn btn-power" onclick="sendKey('KEY_POWER')">⏻</button>
+      <button class="btn btn-power" data-key="KEY_POWER" onclick="sendKey('KEY_POWER')">⏻</button>
     </div>
 
     <div class="ip-row" id="ip-row" hidden>
@@ -306,35 +314,35 @@
     </div>
 
     <div class="row">
-      <button class="btn btn-sm" onclick="sendKey('KEY_123')">123</button>
-      <button class="btn btn-sm" onclick="sendKey('KEY_COLOR')">⬤⬤⬤</button>
+      <button class="btn btn-sm" data-key="KEY_123"   onclick="sendKey('KEY_123')">123</button>
+      <button class="btn btn-sm" data-key="KEY_COLOR" onclick="sendKey('KEY_COLOR')">⬤⬤⬤</button>
     </div>
 
     <div class="nav-ring">
       <div class="nav-track"></div>
-      <button class="nav-dir nav-up"    onclick="sendKey('KEY_UP')">▲</button>
-      <button class="nav-dir nav-down"  onclick="sendKey('KEY_DOWN')">▼</button>
-      <button class="nav-dir nav-left"  onclick="sendKey('KEY_LEFT')">◀</button>
-      <button class="nav-dir nav-right" onclick="sendKey('KEY_RIGHT')">▶</button>
-      <button class="nav-ok"            onclick="sendKey('KEY_ENTER')">OK</button>
+      <button class="nav-dir nav-up"    data-key="KEY_UP"    onclick="sendKey('KEY_UP')">▲</button>
+      <button class="nav-dir nav-down"  data-key="KEY_DOWN"  onclick="sendKey('KEY_DOWN')">▼</button>
+      <button class="nav-dir nav-left"  data-key="KEY_LEFT"  onclick="sendKey('KEY_LEFT')">◀</button>
+      <button class="nav-dir nav-right" data-key="KEY_RIGHT" onclick="sendKey('KEY_RIGHT')">▶</button>
+      <button class="nav-ok"            data-key="KEY_ENTER" onclick="sendKey('KEY_ENTER')">OK</button>
     </div>
 
     <div class="icon-row">
-      <button class="btn btn-icon" title="Back"       onclick="sendKey('KEY_BACK')">↩</button>
-      <button class="btn btn-icon" title="Home"       onclick="sendKey('KEY_HOME')">⌂</button>
-      <button class="btn btn-icon" title="Play/Pause" onclick="sendKey('KEY_PLAY')">⏯</button>
+      <button class="btn btn-icon" data-key="KEY_BACK" title="Back"       onclick="sendKey('KEY_BACK')">↩</button>
+      <button class="btn btn-icon" data-key="KEY_HOME" title="Home"       onclick="sendKey('KEY_HOME')">⌂</button>
+      <button class="btn btn-icon" data-key="KEY_PLAY" title="Play/Pause" onclick="sendKey('KEY_PLAY')">⏯</button>
     </div>
 
     <div class="rockers">
       <div class="rocker">
         <span class="rocker-label">VOL</span>
-        <button class="btn btn-rocker" onclick="sendKey('KEY_VOLUP')">+</button>
-        <button class="btn btn-rocker" onclick="sendKey('KEY_VOLDOWN')">−</button>
+        <button class="btn btn-rocker" data-key="KEY_VOLUP"   onclick="sendKey('KEY_VOLUP')">+</button>
+        <button class="btn btn-rocker" data-key="KEY_VOLDOWN" onclick="sendKey('KEY_VOLDOWN')">−</button>
       </div>
       <div class="rocker">
         <span class="rocker-label">CH</span>
-        <button class="btn btn-rocker" onclick="sendKey('KEY_CHUP')">∧</button>
-        <button class="btn btn-rocker" onclick="sendKey('KEY_CHDOWN')">∨</button>
+        <button class="btn btn-rocker" data-key="KEY_CHUP"   onclick="sendKey('KEY_CHUP')">∧</button>
+        <button class="btn btn-rocker" data-key="KEY_CHDOWN" onclick="sendKey('KEY_CHDOWN')">∨</button>
       </div>
     </div>
 

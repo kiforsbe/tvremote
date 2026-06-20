@@ -56,7 +56,16 @@ function connect() {
   ws.onclose = () => { setStatus('err'); ws = null; };
 }
 
+function flash(key) {
+  const btn = document.querySelector(`[data-key="${key}"]`);
+  if (!btn) return;
+  btn.classList.remove('btn-flash');
+  void btn.offsetWidth; // force reflow so animation restarts on rapid presses
+  btn.classList.add('btn-flash');
+}
+
 function sendKey(key) {
+  flash(key);
   if (!ws || ws.readyState !== WebSocket.OPEN) return;
   ws.send(buildKeyCommand(key));
 }

@@ -1,4 +1,4 @@
-const { app, BrowserWindow, globalShortcut, Menu } = require('electron');
+const { app, BrowserWindow, globalShortcut, Menu, ipcMain } = require('electron');
 const http = require('http');
 const fs   = require('fs');
 const path = require('path');
@@ -59,6 +59,42 @@ function registerShortcuts(win) {
   }
 }
 
+ipcMain.handle('open-ip-dialog', (event, currentIp) => {
+  const mainWin = BrowserWindow.fromWebContents(event.sender);
+  return new Promise(resolve => {
+    const dlg = new BrowserWindow({
+      width:     380,
+      height:    180,
+      parent:    mainWin,
+      modal:     true,
+      frame:     false,
+      resizable: false,
+      backgroundColor: '#1f1f1f',
+      webPreferences: {
+        nodeIntegration:  false,
+        contextIsolation: true,
+        preload:          path.join(__dirname, 'dialog-preload.js'),
+      },
+    });
+
+    try { dlg.setBackgroundMaterial('mica'); } catch (_) {}
+
+    dlg.loadFile(path.join(__dirname, 'ip-dialog.html'), { query: { ip: currentIp } });
+
+    const onSave = (_, ip) => { cleanup(); dlg.close(); resolve(ip); };
+    const onCancel = ()    => { cleanup(); dlg.close(); resolve(null); };
+
+    function cleanup() {
+      ipcMain.removeListener('ip-dialog-save',   onSave);
+      ipcMain.removeListener('ip-dialog-cancel', onCancel);
+    }
+
+    ipcMain.once('ip-dialog-save',   onSave);
+    ipcMain.once('ip-dialog-cancel', onCancel);
+    dlg.on('closed', () => { cleanup(); resolve(null); });
+  });
+});
+
 app.whenReady().then(() => {
   Menu.setApplicationMenu(null);
 
@@ -71,6 +107,7 @@ app.whenReady().then(() => {
     webPreferences: {
       nodeIntegration:  false,
       contextIsolation: true,
+      preload:          path.join(__dirname, 'preload.js'),
     },
   });
 
@@ -81,7 +118,7 @@ app.whenReady().then(() => {
   win.webContents.on('context-menu', () => {
     Menu.buildFromTemplate([
       { label: 'Set TV IP…',
-        click: () => win.webContents.executeJavaScript('toggleIpRow()').catch(() => {}) },
+        click: () => win.webContents.executeJavaScript('openSettings()').catch(() => {}) },
       { label: 'Reconnect',
         click: () => win.webContents.executeJavaScript('connect()').catch(() => {}) },
       { label: 'Accept TV Certificate',

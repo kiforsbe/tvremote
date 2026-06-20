@@ -55,7 +55,14 @@ function sendKey(key) {
   ws.send(buildKeyCommand(key));
 }
 
-function toggleIpRow() {
+function openSettings() {
+  if (window.electronAPI) {
+    window.electronAPI.openIpDialog(getIp()).then(ip => {
+      if (ip) { localStorage.setItem('tvip', ip); connect(); }
+    });
+    return;
+  }
+  // iPhone / browser fallback — inline row
   const row  = document.getElementById('ip-row');
   const gear = document.getElementById('btn-settings');
   if (row.hidden) {
@@ -72,10 +79,7 @@ function toggleIpRow() {
 
 function applyIp() {
   const ip = document.getElementById('tvip').value.trim();
-  if (ip) {
-    localStorage.setItem('tvip', ip);
-    connect();
-  }
+  if (ip) { localStorage.setItem('tvip', ip); connect(); }
   document.getElementById('ip-row').hidden = true;
   document.getElementById('btn-settings').classList.remove('open');
 }
@@ -95,7 +99,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const dot = document.getElementById('status-dot');
   if (dot) dot.addEventListener('click', () => {
-    if (!ws || ws.readyState !== WebSocket.OPEN) toggleIpRow();
+    if (!ws || ws.readyState !== WebSocket.OPEN) openSettings();
   });
 
   const ipInput = document.getElementById('tvip');

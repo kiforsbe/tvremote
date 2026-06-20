@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>TV Remote Settings</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html {
+      height: 100%;
+      /* clip to Windows 11 rounded corners */
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    body {
+      height: 100%;
+      font-family: 'Segoe UI Variable Text', 'Segoe UI', system-ui, sans-serif;
+      font-size: 14px;
+      color: rgba(255, 255, 255, 0.95);
+      background: transparent;
+      display: flex;
+      flex-direction: column;
+      padding: 24px 24px 20px;
+      gap: 12px;
+      -webkit-app-region: drag;
+    }
+
+    button, input {
+      -webkit-app-region: no-drag;
+    }
+
+    h1 {
+      font-size: 14px;
+      font-weight: 600;
+      line-height: 20px;
+      letter-spacing: 0;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    label {
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.78);
+    }
+
+    input {
+      height: 32px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.09);
+      border-bottom-color: rgba(255, 255, 255, 0.45);
+      border-radius: 4px;
+      color: rgba(255, 255, 255, 0.95);
+      font-family: inherit;
+      font-size: 14px;
+      padding: 0 12px;
+      outline: none;
+      transition: border-color 0.1s, background 0.1s;
+    }
+
+    input:focus {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(255, 255, 255, 0.09);
+      border-bottom-color: #60cdff;
+    }
+
+    .actions {
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+      margin-top: auto;
+    }
+
+    button {
+      height: 32px;
+      min-width: 80px;
+      padding: 0 16px;
+      border-radius: 4px;
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 400;
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: background 0.1s;
+    }
+
+    .btn-cancel {
+      background: rgba(255, 255, 255, 0.06);
+      border-color: rgba(255, 255, 255, 0.09);
+      color: rgba(255, 255, 255, 0.95);
+    }
+    .btn-cancel:hover  { background: rgba(255, 255, 255, 0.09); }
+    .btn-cancel:active { background: rgba(255, 255, 255, 0.04); }
+
+    .btn-save {
+      background: #0067c0;
+      border-color: rgba(255, 255, 255, 0.07);
+      color: #fff;
+    }
+    .btn-save:hover  { background: #1975c9; }
+    .btn-save:active { background: #0060b4; color: rgba(255,255,255,0.75); }
+  </style>
+</head>
+<body>
+  <h1>TV Remote Settings</h1>
+  <div class="field">
+    <label for="ip">TV IP address</label>
+    <input id="ip" type="text" inputmode="decimal"
+           placeholder="192.168.x.x" spellcheck="false" autocomplete="off">
+  </div>
+  <div class="actions">
+    <button class="btn-cancel" id="btn-cancel">Cancel</button>
+    <button class="btn-save"   id="btn-save">Save</button>
+  </div>
+  <script>
+    const input = document.getElementById('ip');
+    input.value = new URLSearchParams(location.search).get('ip') || '';
+    input.focus();
+    input.select();
+
+    document.getElementById('btn-save').onclick   = () => window.dialogAPI.save(input.value.trim());
+    document.getElementById('btn-cancel').onclick = () => window.dialogAPI.cancel();
+
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Enter')  window.dialogAPI.save(input.value.trim());
+      if (e.key === 'Escape') window.dialogAPI.cancel();
+    });
+  </script>
+</body>
+</html>

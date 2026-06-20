@@ -1,13 +1,17 @@
-const Jimp = require('jimp');
-const path = require('path');
-const fs   = require('fs');
+const Jimp     = require('jimp');
+const pngToIco = require('png-to-ico').default;
+const path     = require('path');
+const fs       = require('fs');
+const os       = require('os');
 
-const OUT = path.join(__dirname, '..', 'app', 'icons');
+const OUT       = path.join(__dirname, '..', 'app', 'icons');
+const BUILD_DIR = path.join(__dirname, '..', 'build');
+const ICO_SIZES = [16, 32, 48, 64, 128, 256];
+
 fs.mkdirSync(OUT, { recursive: true });
 
-async function generate(size) {
+async function makeImage(size) {
   const img = new Jimp(size, size, 0x141414ff);
-
   const cx = size / 2;
   const cy = size / 2;
   const bw = size * 0.55;
@@ -35,13 +39,38 @@ async function generate(size) {
     }
   }
 
+  return img;
+}
+
+async function generate(size) {
+  const img = await makeImage(size);
   await img.writeAsync(path.join(OUT, `icon-${size}.png`));
   console.log(`  icon-${size}.png`);
+}
+
+async function generateIco() {
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'tvremote-ico-'));
+  try {
+    const pngPaths = [];
+    for (const size of ICO_SIZES) {
+      const img = await makeImage(size);
+      const p   = path.join(tmpDir, `icon-${size}.png`);
+      await img.writeAsync(p);
+      pngPaths.push(p);
+    }
+    const buf = await pngToIco(pngPaths);
+    fs.mkdirSync(BUILD_DIR, { recursive: true });
+    fs.writeFileSync(path.join(BUILD_DIR, 'icon.ico'), buf);
+    console.log('  build/icon.ico');
+  } finally {
+    fs.rmSync(tmpDir, { recursive: true, force: true });
+  }
 }
 
 (async () => {
   console.log('Generating icons…');
   await generate(192);
   await generate(512);
+  await generateIco();
   console.log('Done.');
 })().catch(e => { console.error(e); process.exit(1); });

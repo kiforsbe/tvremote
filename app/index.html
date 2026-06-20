@@ -93,6 +93,27 @@
     .status-dot.ok  { background: #27ae60; }
     .status-dot.err { background: #c0392b; }
 
+    /* ── Settings button ────────────────────── */
+    .btn-settings {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: transparent;
+      border: none;
+      color: var(--text-dim);
+      font-size: 13px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: color 0.12s;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+
+    .btn-settings:hover  { color: var(--text); }
+    .btn-settings:active { color: var(--text); }
+
     /* ── Power ──────────────────────────────── */
     .power-row {
       width: 100%;
@@ -229,6 +250,7 @@
 
     <div class="power-row">
       <div class="status-dot" id="status-dot"></div>
+      <button class="btn-settings" onclick="promptIp()" title="Set TV IP">⚙</button>
       <button class="btn btn-power" onclick="sendKey('KEY_POWER')">⏻</button>
     </div>
 

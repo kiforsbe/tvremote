@@ -1,4 +1,4 @@
-const { app, BrowserWindow, globalShortcut, Menu, ipcMain, session } = require('electron');
+const { app, BrowserWindow, globalShortcut, Menu, ipcMain, session, screen } = require('electron');
 const http = require('http');
 const fs   = require('fs');
 const path = require('path');
@@ -6,7 +6,7 @@ const dgram = require('dgram');
 
 const APP_DIR   = path.join(__dirname, 'app');
 const HTTP_PORT = 3000;
-const WIN_W          = 260;
+const WIN_W          = 400;
 const WIN_H          = 680;
 const WIN_H_NUMPAD   = 760;
 
@@ -184,6 +184,16 @@ ipcMain.handle('set-numpad', (event, open) => {
 
 ipcMain.handle('discover-tvs', discoverTvs);
 
+ipcMain.on('set-ignore-mouse-events', (event, ignore) => {
+  const w = BrowserWindow.fromWebContents(event.sender);
+  if (w) w.setIgnoreMouseEvents(ignore, { forward: true });
+});
+
+ipcMain.handle('open-app-manager', (_event, _appsJson) => {
+  // stub — replaced in Task 6
+  return null;
+});
+
 app.whenReady().then(() => {
   // cert_verify_proc_builtin rejects Samsung TV's self-signed cert before
   // certificate-error can intercept it — bypass at the session level instead
@@ -191,7 +201,17 @@ app.whenReady().then(() => {
 
   Menu.setApplicationMenu(null);
 
+  const { width: sw, height: sh } = screen.getPrimaryDisplay().workAreaSize;
+  // Remote body (180px) is right-aligned at win_x + 360 (400 - 40 padding).
+  // To keep remote left edge at same screen position as old 260px centred window:
+  // old remote left = (sw-260)/2 + 40 = (sw-180)/2
+  // new win_x + 180 = (sw-180)/2  →  win_x = (sw-540)/2
+  const winX = Math.round((sw - 540) / 2);
+  const winY = Math.round((sh - WIN_H) / 2);
+
   const win = new BrowserWindow({
+    x:           winX,
+    y:           winY,
     width:       WIN_W,
     height:      WIN_H,
     resizable:   false,
@@ -203,6 +223,8 @@ app.whenReady().then(() => {
       preload:          path.join(__dirname, 'preload.js'),
     },
   });
+
+  win.setIgnoreMouseEvents(true, { forward: true });
 
   win.loadFile(path.join(APP_DIR, 'index.html'));
   startHttpServer();

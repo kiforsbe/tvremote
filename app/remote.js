@@ -204,8 +204,14 @@ function renderDrawer() {
     const appBtn = document.createElement('button');
     appBtn.className = 'drawer-app-btn';
     appBtn.title = app.name;
-    appBtn.innerHTML =
-      `<span class="app-icon">${app.icon}</span><span class="app-name">${app.name}</span>`;
+    const iconEl = document.createElement('span');
+    iconEl.className = 'app-icon';
+    iconEl.textContent = app.icon;
+    const nameEl = document.createElement('span');
+    nameEl.className = 'app-name';
+    nameEl.textContent = app.name;
+    appBtn.appendChild(iconEl);
+    appBtn.appendChild(nameEl);
     appBtn.onclick = e => {
       if (e.shiftKey && app.deepLink) { showYouTubeInput(appBtn, app.appId); }
       else { launchApp(app.appId); }

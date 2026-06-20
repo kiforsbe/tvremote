@@ -150,7 +150,137 @@ function sendKey(key) {
 
 function launchApp(appId, metaTag) {
   if (!ws || ws.readyState !== WebSocket.OPEN) return;
-  ws.send(buildAppLaunchCommand(appId, metaTag || null));
+  ws.send(buildAppLaunchCommand(appId, metaTag != null ? metaTag : null));
+}
+
+let _mediaApps = [];
+
+function setMediaApps(apps) {
+  _mediaApps = apps;
+  saveMediaApps(apps);
+  renderPinnedApps();
+  renderDrawer();
+}
+
+function renderPinnedApps() {
+  const container = document.getElementById('pinned-apps');
+  if (!container) return;
+  container.innerHTML = '';
+  for (const app of _mediaApps.slice(0, 3)) {
+    const btn = document.createElement('button');
+    btn.className = 'btn btn-icon pinned-app-btn';
+    btn.title = app.name;
+    btn.textContent = app.icon;
+    btn.onclick = e => {
+      if (e.shiftKey && app.deepLink) { showYouTubeInput(btn, app.appId); }
+      else { launchApp(app.appId); }
+    };
+    container.appendChild(btn);
+  }
+}
+
+function renderDrawer() {
+  const container = document.getElementById('drawer-apps');
+  if (!container) return;
+  container.innerHTML = '';
+  if (_mediaApps.length === 0) {
+    const p = document.createElement('p');
+    p.className = 'drawer-empty';
+    p.textContent = 'No apps — tap ⚙ Manage';
+    container.appendChild(p);
+    return;
+  }
+  for (let i = 0; i < _mediaApps.length; i++) {
+    const app = _mediaApps[i];
+    const row = document.createElement('div');
+    row.className = 'drawer-app-row';
+
+    const upBtn = document.createElement('button');
+    upBtn.className = 'drawer-order-btn';
+    upBtn.textContent = '↑';
+    upBtn.disabled = (i === 0);
+    upBtn.onclick = () => setMediaApps(reorderApp(_mediaApps, app.id, 'up'));
+
+    const appBtn = document.createElement('button');
+    appBtn.className = 'drawer-app-btn';
+    appBtn.title = app.name;
+    appBtn.innerHTML =
+      `<span class="app-icon">${app.icon}</span><span class="app-name">${app.name}</span>`;
+    appBtn.onclick = e => {
+      if (e.shiftKey && app.deepLink) { showYouTubeInput(appBtn, app.appId); }
+      else { launchApp(app.appId); }
+    };
+
+    const downBtn = document.createElement('button');
+    downBtn.className = 'drawer-order-btn';
+    downBtn.textContent = '↓';
+    downBtn.disabled = (i === _mediaApps.length - 1);
+    downBtn.onclick = () => setMediaApps(reorderApp(_mediaApps, app.id, 'down'));
+
+    row.appendChild(upBtn);
+    row.appendChild(appBtn);
+    row.appendChild(downBtn);
+    container.appendChild(row);
+  }
+}
+
+function openDrawer() {
+  document.getElementById('remote-container').classList.add('drawer-open');
+  document.getElementById('drawer-tab').textContent = '›';
+}
+
+function closeDrawer() {
+  document.getElementById('remote-container').classList.remove('drawer-open');
+  document.getElementById('drawer-tab').textContent = '‹';
+}
+
+function showYouTubeInput(anchorEl, appId) {
+  const existing = document.getElementById('yt-input-row');
+  if (existing) existing.remove();
+
+  const row = document.createElement('div');
+  row.id = 'yt-input-row';
+  row.className = 'yt-input-row';
+
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.className = 'yt-input';
+  input.placeholder = 'YouTube URL or video ID';
+
+  const actionsDiv = document.createElement('div');
+  actionsDiv.className = 'yt-input-actions';
+
+  const confirmBtn = document.createElement('button');
+  confirmBtn.className = 'btn yt-confirm-btn';
+  confirmBtn.textContent = '▶';
+
+  const err = document.createElement('span');
+  err.className = 'yt-input-err';
+  err.hidden = true;
+  err.textContent = 'Not a valid YouTube URL or ID';
+
+  const submit = () => {
+    const videoId = parseYouTubeVideoId(input.value);
+    if (!videoId) { err.hidden = false; return; }
+    launchApp(appId, videoId);
+    row.remove();
+  };
+
+  confirmBtn.onclick = submit;
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Enter')  submit();
+    if (e.key === 'Escape') row.remove();
+  });
+
+  actionsDiv.appendChild(input);
+  actionsDiv.appendChild(confirmBtn);
+  row.appendChild(actionsDiv);
+  row.appendChild(err);
+
+  const parent = anchorEl.closest('.drawer-app-row') || anchorEl.closest('.pinned-apps');
+  if (parent) parent.after(row);
+  else        anchorEl.after(row);
+  input.focus();
 }
 
 function toggleNumpad() {
@@ -212,6 +342,40 @@ document.addEventListener('keydown', e => {
 });
 
 document.addEventListener('DOMContentLoaded', () => {
+  _mediaApps = loadMediaApps();
+  renderPinnedApps();
+  renderDrawer();
+
+  const drawerTab       = document.getElementById('drawer-tab');
+  const remoteContainer = document.getElementById('remote-container');
+  const manageBtn       = document.getElementById('drawer-manage-btn');
+
+  drawerTab.addEventListener('click', () => {
+    if (remoteContainer.classList.contains('drawer-open')) closeDrawer();
+    else openDrawer();
+  });
+
+  drawerTab.addEventListener('mouseenter', openDrawer);
+
+  let _closeTimer = null;
+  remoteContainer.addEventListener('mouseleave', () => {
+    _closeTimer = setTimeout(() => {
+      closeDrawer();
+      window.electronAPI?.setIgnoreMouseEvents(true);
+    }, 150);
+  });
+  remoteContainer.addEventListener('mouseenter', () => {
+    if (_closeTimer) { clearTimeout(_closeTimer); _closeTimer = null; }
+    window.electronAPI?.setIgnoreMouseEvents(false);
+  });
+
+  manageBtn.addEventListener('click', () => {
+    if (!window.electronAPI?.openAppManager) return;
+    window.electronAPI.openAppManager(JSON.stringify(_mediaApps)).then(result => {
+      if (result) setMediaApps(JSON.parse(result));
+    });
+  });
+
   setStatus('err');
   if (!getIp()) {
     setNeedsConfig(true);

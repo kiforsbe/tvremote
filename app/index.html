@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="TV Remote">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <title>TV Remote</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:          #0f0f0f;
+      --remote-body: #141414;
+      --btn:         #1e1e1e;
+      --btn-hover:   #2a2a2a;
+      --btn-active:  #333333;
+      --text:        #e0e0e0;
+      --text-dim:    #555555;
+      --power-red:   #c0392b;
+      --power-hover: #e74c3c;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, 'Segoe UI', Arial, sans-serif;
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding-top:    max(16px, env(safe-area-inset-top));
+      padding-right:  max(8px,  env(safe-area-inset-right));
+      padding-bottom: max(16px, env(safe-area-inset-bottom));
+      padding-left:   max(8px,  env(safe-area-inset-left));
+      gap: 14px;
+    }
+
+    /* ── Connection bar ─────────────────────── */
+    .connect-bar {
+      width: 180px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .connect-bar input {
+      background: var(--btn);
+      border: 1px solid #2a2a2a;
+      color: var(--text);
+      padding: 7px 10px;
+      border-radius: 8px;
+      font-size: 13px;
+      outline: none;
+      width: 100%;
+    }
+
+    .connect-bar input:focus { border-color: #444; }
+
+    .connect-btn {
+      background: var(--btn);
+      border: 1px solid #2a2a2a;
+      color: var(--text);
+      padding: 7px;
+      min-height: 44px;
+      border-radius: 8px;
+      font-size: 13px;
+      cursor: pointer;
+      text-align: center;
+      transition: background 0.12s;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .connect-btn:hover  { background: var(--btn-hover); }
+    .connect-btn:active { background: var(--btn-active); }
+
+    #status {
+      font-size: 11px;
+      color: var(--text-dim);
+      text-align: center;
+      transition: color 0.2s;
+    }
+
+    #status.ok  { color: #27ae60; }
+    #status.err { color: #e74c3c; }
+
+    .cert-hint {
+      font-size: 10px;
+      color: #3a3a3a;
+      text-align: center;
+      line-height: 1.5;
+    }
+
+    .cert-hint button {
+      background: none;
+      border: none;
+      color: #4a4a4a;
+      font-size: 10px;
+      text-decoration: underline;
+      cursor: pointer;
+      padding: 0;
+    }
+
+    /* ── Remote body ────────────────────────── */
+    .remote {
+      background: var(--remote-body);
+      border-radius: 44px;
+      width: 180px;
+      padding: 20px 16px 26px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+      box-shadow:
+        0 10px 40px rgba(0,0,0,0.8),
+        inset 0 1px 0 rgba(255,255,255,0.04);
+    }
+
+    /* ── Generic button ─────────────────────── */
+    .btn {
+      background: var(--btn);
+      border: none;
+      color: var(--text);
+      border-radius: 10px;
+      font-size: 13px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.12s;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+
+    .btn:hover  { background: var(--btn-hover); }
+    .btn:active { background: var(--btn-active); }
+
+    /* ── Power ──────────────────────────────── */
+    .power-row {
+      width: 100%;
+      display: flex;
+      justify-content: flex-end;
+      padding-right: 4px;
+    }
+
+    .btn-power {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: var(--power-red);
+      font-size: 15px;
+    }
+
+    .btn-power:hover  { background: var(--power-hover); }
+    .btn-power:active { background: var(--power-red); }
+
+    /* ── Top row (123 / color) ──────────────── */
+    .row { display: flex; gap: 8px; }
+
+    .btn-sm {
+      width: 60px;
+      min-height: 44px;
+      border-radius: 8px;
+      font-size: 12px;
+    }
+
+    /* ── Navigation ring ────────────────────── */
+    .nav-ring {
+      position: relative;
+      width: 116px;
+      height: 116px;
+      flex-shrink: 0;
+    }
+
+    .nav-track {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      background: var(--btn);
+    }
+
+    .nav-dir {
+      position: absolute;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: transparent;
+      border: none;
+      color: var(--text);
+      font-size: 12px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.12s;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+
+    .nav-dir:hover  { background: rgba(255,255,255,0.07); }
+    .nav-dir:active { background: rgba(255,255,255,0.13); }
+
+    .nav-up    { top: 2px;    left: 50%; transform: translateX(-50%); }
+    .nav-down  { bottom: 2px; left: 50%; transform: translateX(-50%); }
+    .nav-left  { left: 2px;   top:  50%; transform: translateY(-50%); }
+    .nav-right { right: 2px;  top:  50%; transform: translateY(-50%); }
+
+    .nav-ok {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: var(--btn-hover);
+      border: none;
+      color: var(--text);
+      font-size: 12px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.12s;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+
+    .nav-ok:hover  { background: var(--btn-active); }
+    .nav-ok:active { background: #3d3d3d; }
+
+    /* ── Icon row: Back / Home / Play ───────── */
+    .icon-row { display: flex; gap: 12px; }
+
+    .btn-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      font-size: 16px;
+    }
+
+    /* ── Rockers ────────────────────────────── */
+    .rockers { display: flex; gap: 22px; }
+
+    .rocker {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+    }
+
+    .rocker-label {
+      font-size: 10px;
+      color: var(--text-dim);
+      letter-spacing: 0.5px;
+      margin-bottom: 2px;
+    }
+
+    .btn-rocker {
+      width: 48px;
+      min-height: 44px;
+      border-radius: 8px;
+      font-size: 18px;
+      font-weight: 300;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="connect-bar">
+    <input id="tvip" type="text" inputmode="decimal"
+           value="192.168.50.122" placeholder="TV IP address">
+    <button class="connect-btn" onclick="connect()">Connect</button>
+    <div id="status">Not connected</div>
+    <p class="cert-hint">
+      iPhone first-time:
+      <button onclick="openCertPage()">accept TV certificate</button>
+    </p>
+  </div>
+
+  <div class="remote">
+
+    <div class="power-row">
+      <button class="btn btn-power" onclick="sendKey('KEY_POWER')">⏻</button>
+    </div>
+
+    <div class="row">
+      <button class="btn btn-sm" onclick="sendKey('KEY_123')">123</button>
+      <button class="btn btn-sm" onclick="sendKey('KEY_COLOR')">⬤⬤⬤</button>
+    </div>
+
+    <div class="nav-ring">
+      <div class="nav-track"></div>
+      <button class="nav-dir nav-up"    onclick="sendKey('KEY_UP')">▲</button>
+      <button class="nav-dir nav-down"  onclick="sendKey('KEY_DOWN')">▼</button>
+      <button class="nav-dir nav-left"  onclick="sendKey('KEY_LEFT')">◀</button>
+      <button class="nav-dir nav-right" onclick="sendKey('KEY_RIGHT')">▶</button>
+      <button class="nav-ok"            onclick="sendKey('KEY_ENTER')">OK</button>
+    </div>
+
+    <div class="icon-row">
+      <button class="btn btn-icon" title="Back"       onclick="sendKey('KEY_BACK')">↩</button>
+      <button class="btn btn-icon" title="Home"       onclick="sendKey('KEY_HOME')">⌂</button>
+      <button class="btn btn-icon" title="Play/Pause" onclick="sendKey('KEY_PLAY')">⏯</button>
+    </div>
+
+    <div class="rockers">
+      <div class="rocker">
+        <span class="rocker-label">VOL</span>
+        <button class="btn btn-rocker" onclick="sendKey('KEY_VOLUP')">+</button>
+        <button class="btn btn-rocker" onclick="sendKey('KEY_VOLDOWN')">−</button>
+      </div>
+      <div class="rocker">
+        <span class="rocker-label">CH</span>
+        <button class="btn btn-rocker" onclick="sendKey('KEY_CHUP')">∧</button>
+        <button class="btn btn-rocker" onclick="sendKey('KEY_CHDOWN')">∨</button>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="remote.js"></script>
+</body>
+</html>

@@ -81,7 +81,7 @@ app.whenReady().then(() => {
   win.webContents.on('context-menu', () => {
     Menu.buildFromTemplate([
       { label: 'Set TV IP…',
-        click: () => win.webContents.executeJavaScript('promptIp()').catch(() => {}) },
+        click: () => win.webContents.executeJavaScript('toggleIpRow()').catch(() => {}) },
       { label: 'Reconnect',
         click: () => win.webContents.executeJavaScript('connect()').catch(() => {}) },
       { label: 'Accept TV Certificate',

@@ -55,12 +55,29 @@ function sendKey(key) {
   ws.send(buildKeyCommand(key));
 }
 
-function promptIp() {
-  const ip = prompt('TV IP address:', getIp());
-  if (ip && ip.trim()) {
-    localStorage.setItem('tvip', ip.trim());
+function toggleIpRow() {
+  const row  = document.getElementById('ip-row');
+  const gear = document.getElementById('btn-settings');
+  if (row.hidden) {
+    document.getElementById('tvip').value = getIp();
+    row.hidden = false;
+    gear.classList.add('open');
+    document.getElementById('tvip').focus();
+    document.getElementById('tvip').select();
+  } else {
+    row.hidden = true;
+    gear.classList.remove('open');
+  }
+}
+
+function applyIp() {
+  const ip = document.getElementById('tvip').value.trim();
+  if (ip) {
+    localStorage.setItem('tvip', ip);
     connect();
   }
+  document.getElementById('ip-row').hidden = true;
+  document.getElementById('btn-settings').classList.remove('open');
 }
 
 function openCertPage() {
@@ -75,12 +92,17 @@ document.addEventListener('keydown', e => {
 
 document.addEventListener('DOMContentLoaded', () => {
   connect();
+
   const dot = document.getElementById('status-dot');
-  if (dot) {
-    dot.addEventListener('click', () => {
-      if (!ws || ws.readyState !== WebSocket.OPEN) promptIp();
-    });
-  }
+  if (dot) dot.addEventListener('click', () => {
+    if (!ws || ws.readyState !== WebSocket.OPEN) toggleIpRow();
+  });
+
+  const ipInput = document.getElementById('tvip');
+  if (ipInput) ipInput.addEventListener('keydown', e => {
+    if (e.key === 'Enter')  { e.preventDefault(); applyIp(); }
+    if (e.key === 'Escape') { e.preventDefault(); toggleIpRow(); }
+  });
 });
 
 // Exported for Jest — browser ignores this (module is undefined)

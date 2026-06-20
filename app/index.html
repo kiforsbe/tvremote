@@ -113,6 +113,36 @@
 
     .btn-settings:hover  { color: var(--text); }
     .btn-settings:active { color: var(--text); }
+    .btn-settings.open   { color: var(--text); }
+
+    /* ── IP row (hidden until gear is clicked) ── */
+    .ip-row {
+      width: 100%;
+      display: flex;
+      gap: 6px;
+    }
+
+    .ip-row input {
+      flex: 1;
+      min-width: 0;
+      background: var(--btn);
+      border: 1px solid #2a2a2a;
+      color: var(--text);
+      padding: 6px 8px;
+      border-radius: 8px;
+      font-size: 11px;
+      outline: none;
+    }
+
+    .ip-row input:focus { border-color: #555; }
+
+    .ip-row .btn-apply {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      font-size: 12px;
+      flex-shrink: 0;
+    }
 
     /* ── Power ──────────────────────────────── */
     .power-row {
@@ -250,8 +280,13 @@
 
     <div class="power-row">
       <div class="status-dot" id="status-dot"></div>
-      <button class="btn-settings" onclick="promptIp()" title="Set TV IP">⚙</button>
+      <button class="btn-settings" id="btn-settings" onclick="toggleIpRow()" title="Set TV IP">⚙</button>
       <button class="btn btn-power" onclick="sendKey('KEY_POWER')">⏻</button>
+    </div>
+
+    <div class="ip-row" id="ip-row" hidden>
+      <input id="tvip" type="text" inputmode="decimal" placeholder="192.168.x.x">
+      <button class="btn btn-apply" onclick="applyIp()">▶</button>
     </div>
 
     <div class="row">

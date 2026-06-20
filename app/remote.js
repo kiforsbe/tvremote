@@ -16,6 +16,73 @@ const KEY_MAP = {
   p:          'KEY_POWER',
 };
 
+const MEDIA_APPS_CATALOG = [
+  { id: 'youtube',     name: 'YouTube',     icon: '▶',  appId: '111299001912', deepLink: true  },
+  { id: 'netflix',     name: 'Netflix',     icon: 'N',  appId: '11101200001',  deepLink: false },
+  { id: 'prime',       name: 'Prime',       icon: '📦', appId: '3201910019365',deepLink: false },
+  { id: 'disney',      name: 'Disney+',     icon: '🏰', appId: '3201901017640',deepLink: false },
+  { id: 'spotify',     name: 'Spotify',     icon: '🎵', appId: '3201606009684',deepLink: false },
+  { id: 'max',         name: 'Max',         icon: 'M',  appId: '3201601007230',deepLink: false },
+  { id: 'appletv',     name: 'Apple TV+',   icon: '',  appId: '3201807016597',deepLink: false },
+  { id: 'applemusic',  name: 'Apple Music', icon: '🎶', appId: '3201908019066',deepLink: false },
+  { id: 'hulu',        name: 'Hulu',        icon: '🟢', appId: '3201601007625',deepLink: false },
+  { id: 'paramount',   name: 'Paramount+',  icon: '⛰', appId: '3201711015986',deepLink: false },
+  { id: 'peacock',     name: 'Peacock',     icon: '🦚', appId: '3202005022341',deepLink: false },
+  { id: 'tubi',        name: 'Tubi',        icon: '📺', appId: '3201504901843',deepLink: false },
+  { id: 'pluto',       name: 'Pluto TV',    icon: '🪐', appId: '3202008022518',deepLink: false },
+  { id: 'crunchyroll', name: 'Crunchyroll', icon: '🍥', appId: '3201611010411',deepLink: false },
+];
+
+function loadMediaApps() {
+  try {
+    const raw = localStorage.getItem('mediaApps');
+    if (raw) return JSON.parse(raw);
+  } catch (_) {}
+  return MEDIA_APPS_CATALOG.slice(0, 3);
+}
+
+function saveMediaApps(apps) {
+  localStorage.setItem('mediaApps', JSON.stringify(apps));
+}
+
+function buildAppLaunchCommand(appId, metaTag) {
+  const params = { id: appId };
+  if (metaTag) params.metaTag = metaTag;
+  return JSON.stringify({ method: 'ms.application.start', params });
+}
+
+function parseYouTubeVideoId(input) {
+  if (!input) return null;
+  input = input.trim();
+  try {
+    const url = new URL(input);
+    if (url.hostname === 'youtu.be') {
+      const id = url.pathname.slice(1).split('?')[0];
+      return id.length === 11 ? id : null;
+    }
+    if (url.hostname.endsWith('youtube.com')) {
+      if (url.pathname.startsWith('/shorts/')) {
+        const id = url.pathname.split('/')[2];
+        return id && id.length === 11 ? id : null;
+      }
+      const v = url.searchParams.get('v');
+      return v && v.length === 11 ? v : null;
+    }
+  } catch (_) {}
+  return input.length === 11 ? input : null;
+}
+
+function reorderApp(apps, id, dir) {
+  const idx = apps.findIndex(a => a.id === id);
+  if (idx === -1) return apps.slice();
+  if (dir === 'up'   && idx === 0)               return apps.slice();
+  if (dir === 'down' && idx === apps.length - 1) return apps.slice();
+  const next = apps.slice();
+  const swap = dir === 'up' ? idx - 1 : idx + 1;
+  [next[idx], next[swap]] = [next[swap], next[idx]];
+  return next;
+}
+
 function buildKeyCommand(key) {
   return JSON.stringify({
     method: 'ms.remote.control',
@@ -79,6 +146,11 @@ function sendKey(key) {
   flash(key);
   if (!ws || ws.readyState !== WebSocket.OPEN) return;
   ws.send(buildKeyCommand(key));
+}
+
+function launchApp(appId, metaTag) {
+  if (!ws || ws.readyState !== WebSocket.OPEN) return;
+  ws.send(buildAppLaunchCommand(appId, metaTag || null));
 }
 
 function toggleNumpad() {
@@ -162,5 +234,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Exported for Jest — browser ignores this (module is undefined)
 if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { KEY_MAP, buildKeyCommand };
+  module.exports = {
+    KEY_MAP,
+    buildKeyCommand,
+    MEDIA_APPS_CATALOG,
+    loadMediaApps,
+    saveMediaApps,
+    buildAppLaunchCommand,
+    parseYouTubeVideoId,
+    reorderApp,
+  };
 }

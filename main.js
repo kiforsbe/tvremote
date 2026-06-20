@@ -5,8 +5,9 @@ const path = require('path');
 
 const APP_DIR   = path.join(__dirname, 'app');
 const HTTP_PORT = 3000;
-const WIN_W     = 260;
-const WIN_H     = 680;
+const WIN_W          = 260;
+const WIN_H          = 680;
+const WIN_H_NUMPAD   = 760;
 
 const MIME = {
   '.html': 'text/html; charset=utf-8',
@@ -88,6 +89,11 @@ ipcMain.handle('open-ip-dialog', (event, currentIp) => {
     ipcMain.once('ip-dialog-cancel', onCancel);
     dlg.on('closed', () => { cleanup(); resolve(null); });
   });
+});
+
+ipcMain.handle('set-numpad', (event, open) => {
+  const w = BrowserWindow.fromWebContents(event.sender);
+  if (w) w.setSize(WIN_W, open ? WIN_H_NUMPAD : WIN_H);
 });
 
 app.whenReady().then(() => {

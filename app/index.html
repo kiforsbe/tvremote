@@ -112,15 +112,14 @@
                   inset 0 1px 2px rgba(255,255,255,0.25);
     }
 
-    /* ── Settings button ────────────────────── */
-    .btn-settings {
+    /* ── Settings / Source buttons ─────────── */
+    .btn-settings, .btn-src {
       width: 28px;
       height: 28px;
       border-radius: 50%;
       background: transparent;
       border: none;
       color: var(--text-dim);
-      font-size: 13px;
       cursor: pointer;
       display: flex;
       align-items: center;
@@ -130,9 +129,12 @@
       user-select: none;
     }
 
-    .btn-settings:hover  { color: var(--text); }
-    .btn-settings:active { color: var(--text); }
-    .btn-settings.open   { color: var(--text); }
+    .btn-settings { font-size: 13px; }
+    .btn-src      { font-size: 8px; font-weight: 700; letter-spacing: 0.3px; }
+
+    .btn-settings:hover, .btn-src:hover   { color: var(--text); }
+    .btn-settings:active, .btn-src:active { color: var(--text); }
+    .btn-settings.open                    { color: var(--text); }
 
     /* ── IP row (hidden until gear is clicked) ── */
     .ip-row {
@@ -173,11 +175,11 @@
     }
 
     .btn-power {
-      width: 44px;
-      height: 44px;
-      border-radius: 50%;
+      width: 40px;
+      height: 20px;
+      border-radius: 10px;
       background: var(--power-red);
-      font-size: 15px;
+      font-size: 11px;
     }
 
     .btn-power:hover  { background: var(--power-hover); }
@@ -233,14 +235,16 @@
       inset: 0;
       background: transparent;
       border: none;
-      color: var(--text);
-      font-size: 11px;
+      color: var(--text-dim);
+      font-size: 13px;
       cursor: pointer;
       display: flex;
       transition: background 0.12s;
       -webkit-tap-highlight-color: transparent;
       user-select: none;
     }
+
+    .nav-dir:hover { color: var(--text); }
 
     .nav-dir:hover  { background: rgba(255,255,255,0.07); }
     .nav-dir:active { background: rgba(255,255,255,0.14); }
@@ -286,7 +290,7 @@
     }
 
     /* ── Rockers ────────────────────────────── */
-    .rockers { display: flex; gap: 22px; }
+    .rockers { display: flex; gap: 11px; }
 
     .rocker {
       display: flex;
@@ -294,6 +298,8 @@
       align-items: center;
       gap: 3px;
     }
+
+    .rocker-mute { justify-content: center; }
 
     .rocker-label {
       font-size: 10px;
@@ -303,12 +309,46 @@
     }
 
     .btn-rocker {
-      width: 48px;
+      width: 42px;
       min-height: 44px;
       border-radius: 8px;
       font-size: 18px;
       font-weight: 300;
     }
+
+    /* ── Numpad panel ───────────────────────── */
+    .numpad {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .numpad-row {
+      display: flex;
+      justify-content: center;
+      gap: 3px;
+    }
+
+    .btn-digit {
+      width: 26px;
+      height: 26px;
+      border-radius: 6px;
+      background: var(--btn);
+      border: none;
+      color: var(--text);
+      font-size: 12px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.12s;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+
+    .btn-digit:hover  { background: var(--btn-hover); }
+    .btn-digit:active { background: var(--btn-active); }
 
     /* ── Last-pressed flash ─────────────────── */
     @keyframes btn-flash {
@@ -326,6 +366,7 @@
     <div class="power-row">
       <div class="status-dot" id="status-dot"></div>
       <button class="btn-settings" id="btn-settings" onclick="openSettings()" title="Set TV IP">⚙</button>
+      <button class="btn-src" data-key="KEY_SOURCE" onclick="sendKey('KEY_SOURCE')" title="Source/Input">SRC</button>
       <button class="btn btn-power" data-key="KEY_POWER" onclick="sendKey('KEY_POWER')">⏻</button>
     </div>
 
@@ -335,26 +376,59 @@
     </div>
 
     <div class="row">
-      <button class="btn btn-sm" data-key="KEY_123" onclick="sendKey('KEY_123')">123</button>
+      <button class="btn btn-sm" data-key="KEY_GUIDE" onclick="sendKey('KEY_GUIDE')">GUIDE</button>
+      <button class="btn btn-sm" data-key="KEY_123"   onclick="toggleNumpad()">123</button>
+    </div>
+
+    <div class="row">
       <button class="btn btn-color btn-red"    data-key="KEY_RED"    onclick="sendKey('KEY_RED')"></button>
       <button class="btn btn-color btn-green"  data-key="KEY_GREEN"  onclick="sendKey('KEY_GREEN')"></button>
       <button class="btn btn-color btn-yellow" data-key="KEY_YELLOW" onclick="sendKey('KEY_YELLOW')"></button>
       <button class="btn btn-color btn-blue"   data-key="KEY_BLUE"   onclick="sendKey('KEY_BLUE')"></button>
     </div>
 
+    <div class="numpad" id="numpad" hidden>
+      <div class="numpad-row">
+        <button class="btn-digit" data-key="KEY_1" onclick="sendKey('KEY_1')">1</button>
+        <button class="btn-digit" data-key="KEY_2" onclick="sendKey('KEY_2')">2</button>
+        <button class="btn-digit" data-key="KEY_3" onclick="sendKey('KEY_3')">3</button>
+        <button class="btn-digit" data-key="KEY_4" onclick="sendKey('KEY_4')">4</button>
+        <button class="btn-digit" data-key="KEY_5" onclick="sendKey('KEY_5')">5</button>
+      </div>
+      <div class="numpad-row">
+        <button class="btn-digit" data-key="KEY_6" onclick="sendKey('KEY_6')">6</button>
+        <button class="btn-digit" data-key="KEY_7" onclick="sendKey('KEY_7')">7</button>
+        <button class="btn-digit" data-key="KEY_8" onclick="sendKey('KEY_8')">8</button>
+        <button class="btn-digit" data-key="KEY_9" onclick="sendKey('KEY_9')">9</button>
+        <button class="btn-digit" data-key="KEY_0" onclick="sendKey('KEY_0')">0</button>
+      </div>
+    </div>
+
     <div class="nav-ring">
       <div class="nav-track"></div>
-      <button class="nav-dir nav-up"    data-key="KEY_UP"    onclick="sendKey('KEY_UP')">▲</button>
-      <button class="nav-dir nav-down"  data-key="KEY_DOWN"  onclick="sendKey('KEY_DOWN')">▼</button>
-      <button class="nav-dir nav-left"  data-key="KEY_LEFT"  onclick="sendKey('KEY_LEFT')">◀</button>
-      <button class="nav-dir nav-right" data-key="KEY_RIGHT" onclick="sendKey('KEY_RIGHT')">▶</button>
+      <button class="nav-dir nav-up"    data-key="KEY_UP"    onclick="sendKey('KEY_UP')">△</button>
+      <button class="nav-dir nav-down"  data-key="KEY_DOWN"  onclick="sendKey('KEY_DOWN')">▽</button>
+      <button class="nav-dir nav-left"  data-key="KEY_LEFT"  onclick="sendKey('KEY_LEFT')">◁</button>
+      <button class="nav-dir nav-right" data-key="KEY_RIGHT" onclick="sendKey('KEY_RIGHT')">▷</button>
       <button class="nav-ok"            data-key="KEY_ENTER" onclick="sendKey('KEY_ENTER')">OK</button>
     </div>
 
     <div class="icon-row">
-      <button class="btn btn-icon" data-key="KEY_RETURN" title="Back" onclick="sendKey('KEY_RETURN')">↩</button>
-      <button class="btn btn-icon" data-key="KEY_HOME" title="Home"       onclick="sendKey('KEY_HOME')">⌂</button>
-      <button class="btn btn-icon" data-key="KEY_PLAY" title="Play/Pause" onclick="sendKey('KEY_PLAY')">⏯</button>
+      <button class="btn btn-icon" data-key="KEY_RETURN" title="Back"       onclick="sendKey('KEY_RETURN')" style="font-size:18px">↩</button>
+      <button class="btn btn-icon" data-key="KEY_HOME"   title="Home"       onclick="sendKey('KEY_HOME')"   style="font-size:18px">⌂</button>
+      <button class="btn btn-icon" data-key="KEY_PLAY"   title="Play/Pause" onclick="sendKey('KEY_PLAY')"   style="font-size:18px">⏵</button>
+    </div>
+
+    <div class="icon-row">
+      <button class="btn btn-icon" data-key="KEY_REWIND" title="Rewind"       onclick="sendKey('KEY_REWIND')">⏪</button>
+      <button class="btn btn-icon" data-key="KEY_STOP"   title="Stop"         onclick="sendKey('KEY_STOP')">⏹</button>
+      <button class="btn btn-icon" data-key="KEY_FF"     title="Fast Forward" onclick="sendKey('KEY_FF')">⏩</button>
+    </div>
+
+    <div class="icon-row">
+      <button class="btn btn-icon" data-key="KEY_EXIT"    title="Exit"     onclick="sendKey('KEY_EXIT')"    style="font-size:11px;font-weight:700;letter-spacing:.5px">EXIT</button>
+      <button class="btn btn-icon" data-key="KEY_INFO"    title="Info"     onclick="sendKey('KEY_INFO')"    style="font-size:18px">ⓘ</button>
+      <button class="btn btn-icon" data-key="KEY_CAPTION" title="Captions" onclick="sendKey('KEY_CAPTION')" style="font-size:12px;font-weight:700">CC</button>
     </div>
 
     <div class="rockers">
@@ -363,10 +437,14 @@
         <button class="btn btn-rocker" data-key="KEY_VOLUP"   onclick="sendKey('KEY_VOLUP')">+</button>
         <button class="btn btn-rocker" data-key="KEY_VOLDOWN" onclick="sendKey('KEY_VOLDOWN')">−</button>
       </div>
+      <div class="rocker rocker-mute">
+        <span class="rocker-label">MUTE</span>
+        <button class="btn btn-icon" data-key="KEY_MUTE" onclick="sendKey('KEY_MUTE')" title="Mute">🔇</button>
+      </div>
       <div class="rocker">
         <span class="rocker-label">CH</span>
-        <button class="btn btn-rocker" data-key="KEY_CHUP"   onclick="sendKey('KEY_CHUP')">∧</button>
-        <button class="btn btn-rocker" data-key="KEY_CHDOWN" onclick="sendKey('KEY_CHDOWN')">∨</button>
+        <button class="btn btn-rocker" data-key="KEY_CHUP"   onclick="sendKey('KEY_CHUP')">⌃</button>
+        <button class="btn btn-rocker" data-key="KEY_CHDOWN" onclick="sendKey('KEY_CHDOWN')">⌄</button>
       </div>
     </div>
 

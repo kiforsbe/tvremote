@@ -70,6 +70,15 @@ function sendKey(key) {
   ws.send(buildKeyCommand(key));
 }
 
+function toggleNumpad() {
+  const panel = document.getElementById('numpad');
+  if (!panel) return;
+  const willOpen = panel.hidden;
+  panel.hidden = !willOpen;
+  flash('KEY_123');
+  if (window.electronAPI?.setNumpad) window.electronAPI.setNumpad(willOpen);
+}
+
 function openSettings() {
   if (window.electronAPI) {
     window.electronAPI.openIpDialog(getIp()).then(ip => {

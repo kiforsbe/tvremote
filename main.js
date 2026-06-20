@@ -146,7 +146,7 @@ ipcMain.handle('open-ip-dialog', (event, currentIp) => {
   return new Promise(resolve => {
     const dlg = new BrowserWindow({
       width:     380,
-      height:    180,
+      height:    280,
       parent:    mainWin,
       modal:     true,
       frame:     false,

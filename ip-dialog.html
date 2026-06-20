@@ -8,7 +8,6 @@
 
     html {
       height: 100%;
-      /* clip to Windows 11 rounded corners */
       border-radius: 8px;
       overflow: hidden;
     }
@@ -22,21 +21,66 @@
       display: flex;
       flex-direction: column;
       padding: 24px 24px 20px;
-      gap: 12px;
+      gap: 10px;
       -webkit-app-region: drag;
     }
 
-    button, input {
-      -webkit-app-region: no-drag;
-    }
+    button, input { -webkit-app-region: no-drag; }
 
     h1 {
       font-size: 14px;
       font-weight: 600;
       line-height: 20px;
-      letter-spacing: 0;
     }
 
+    /* ── Discovery ─────────────────────────────── */
+    .discovery-status {
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.45);
+      font-style: italic;
+    }
+
+    .tv-list {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      max-height: 90px;
+      overflow-y: auto;
+    }
+
+    .tv-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 5px 10px;
+      border-radius: 4px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      cursor: pointer;
+      text-align: left;
+      font-family: inherit;
+      font-size: 13px;
+      color: rgba(255, 255, 255, 0.95);
+      transition: background 0.1s;
+    }
+
+    .tv-item:hover  { background: rgba(255, 255, 255, 0.09); }
+    .tv-item:active { background: rgba(255, 255, 255, 0.04); }
+
+    .tv-name { flex: 1; }
+
+    .tv-ip {
+      font-size: 11px;
+      color: rgba(255, 255, 255, 0.4);
+      font-family: monospace;
+    }
+
+    .divider {
+      height: 1px;
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    /* ── IP field ──────────────────────────────── */
     .field {
       display: flex;
       flex-direction: column;
@@ -68,6 +112,7 @@
       border-bottom-color: #60cdff;
     }
 
+    /* ── Actions ───────────────────────────────── */
     .actions {
       display: flex;
       gap: 8px;
@@ -107,6 +152,11 @@
 </head>
 <body>
   <h1>TV Remote Settings</h1>
+
+  <div class="discovery-status" id="discovery-status">Searching for TVs…</div>
+  <div class="tv-list"          id="tv-list"></div>
+  <div class="divider"          id="divider" hidden></div>
+
   <div class="field">
     <label for="ip">TV IP address</label>
     <input id="ip" type="text" inputmode="decimal"
@@ -116,6 +166,7 @@
     <button class="btn-cancel" id="btn-cancel">Cancel</button>
     <button class="btn-save"   id="btn-save">Save</button>
   </div>
+
   <script>
     const input = document.getElementById('ip');
     input.value = new URLSearchParams(location.search).get('ip') || '';
@@ -128,6 +179,36 @@
     document.addEventListener('keydown', e => {
       if (e.key === 'Enter')  window.dialogAPI.save(input.value.trim());
       if (e.key === 'Escape') window.dialogAPI.cancel();
+    });
+
+    // TV discovery
+    window.dialogAPI.discoverTvs().then(tvs => {
+      const statusEl = document.getElementById('discovery-status');
+      const listEl   = document.getElementById('tv-list');
+      const divider  = document.getElementById('divider');
+
+      if (tvs.length === 0) {
+        statusEl.textContent = 'No TVs found';
+      } else {
+        statusEl.hidden = true;
+        divider.hidden  = false;
+        for (const tv of tvs) {
+          const btn      = document.createElement('button');
+          btn.className  = 'tv-item';
+          const nameSpan = document.createElement('span');
+          nameSpan.className   = 'tv-name';
+          nameSpan.textContent = tv.name;
+          const ipSpan = document.createElement('span');
+          ipSpan.className   = 'tv-ip';
+          ipSpan.textContent = tv.ip;
+          btn.appendChild(nameSpan);
+          btn.appendChild(ipSpan);
+          btn.onclick = () => { input.value = tv.ip; input.focus(); };
+          listEl.appendChild(btn);
+        }
+      }
+    }).catch(() => {
+      document.getElementById('discovery-status').textContent = 'Discovery unavailable';
     });
   </script>
 </body>

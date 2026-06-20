@@ -1,4 +1,4 @@
-const { app, BrowserWindow, globalShortcut, Menu, ipcMain } = require('electron');
+const { app, BrowserWindow, globalShortcut, Menu, ipcMain, session } = require('electron');
 const http = require('http');
 const fs   = require('fs');
 const path = require('path');
@@ -15,11 +15,6 @@ const MIME = {
   '.js':   'application/javascript',
 };
 
-// Allow Samsung TV's self-signed WSS certificate
-app.on('certificate-error', (event, _wc, _url, _err, _cert, cb) => {
-  event.preventDefault();
-  cb(true);
-});
 
 function startHttpServer() {
   http.createServer((req, res) => {
@@ -96,6 +91,10 @@ ipcMain.handle('open-ip-dialog', (event, currentIp) => {
 });
 
 app.whenReady().then(() => {
+  // cert_verify_proc_builtin rejects Samsung TV's self-signed cert before
+  // certificate-error can intercept it — bypass at the session level instead
+  session.defaultSession.setCertificateVerifyProc((_req, cb) => cb(0));
+
   Menu.setApplicationMenu(null);
 
   const win = new BrowserWindow({

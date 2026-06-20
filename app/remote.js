@@ -45,7 +45,13 @@ function connect() {
   const url =
     `wss://${ip}:8002/api/v2/channels/samsung.remote.control?name=${btoa('TVRemote')}`;
   ws = new WebSocket(url);
-  ws.onopen  = () => setStatus('ok');
+  ws.onopen = () => setStatus('connecting');
+  ws.onmessage = e => {
+    try {
+      const msg = JSON.parse(e.data);
+      if (msg.event === 'ms.channel.connect') setStatus('ok');
+    } catch (_) {}
+  };
   ws.onerror = () => setStatus('err');
   ws.onclose = () => { setStatus('err'); ws = null; };
 }
@@ -95,6 +101,7 @@ document.addEventListener('keydown', e => {
 });
 
 document.addEventListener('DOMContentLoaded', () => {
+  setStatus('err');
   connect();
 
   const dot = document.getElementById('status-dot');

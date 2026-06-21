@@ -38,21 +38,65 @@ const MIME = {
 
 
 function startHttpServer() {
-  http.createServer((req, res) => {
-    const rel  = req.url === '/' ? '/index.html' : req.url;
+  http.createServer(async (req, res) => {
+    const pathname = new URL(req.url, 'http://localhost').pathname;
+
+    // ── TV discovery (SSDP runs server-side; browsers can't do UDP multicast) ─
+    if (pathname === '/api/discover' && req.method === 'GET') {
+      try {
+        const tvs = await discoverTvs();
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(tvs));
+      } catch (_) {
+        res.writeHead(500); res.end('[]');
+      }
+      return;
+    }
+
+    // ── App launch proxy (TV REST API has no CORS headers) ─────────────────
+    if (pathname === '/api/launch' && req.method === 'POST') {
+      let body = '';
+      await new Promise(resolve => { req.on('data', c => { body += c; }); req.on('end', resolve); });
+      try {
+        const { ip, appId, metaTag } = JSON.parse(body);
+        const postBody = metaTag ? JSON.stringify({ id: metaTag }) : '';
+        await new Promise(resolve => {
+          const opts = {
+            hostname: ip, port: 8001,
+            path:    `/api/v2/applications/${encodeURIComponent(appId)}`,
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(postBody) },
+            timeout: 5000,
+          };
+          const tvReq = http.request(opts, tvRes => {
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ status: tvRes.statusCode }));
+            resolve();
+          });
+          tvReq.on('timeout', () => tvReq.destroy());
+          tvReq.on('error', err => {
+            res.writeHead(502); res.end(JSON.stringify({ error: err.message })); resolve();
+          });
+          if (postBody) tvReq.write(postBody);
+          tvReq.end();
+        });
+      } catch (_) {
+        res.writeHead(400); res.end(JSON.stringify({ error: 'Bad request' }));
+      }
+      return;
+    }
+
+    // ── Static files — '/' serves the mobile UI ────────────────────────────
+    const rel  = pathname === '/' ? '/mobile.html' : pathname;
     const file = path.join(APP_DIR, path.normalize(rel));
 
-    // Prevent directory traversal
     if (!file.startsWith(APP_DIR + path.sep) && file !== APP_DIR) {
-      res.writeHead(403);
-      return res.end();
+      res.writeHead(403); return res.end();
     }
 
     fs.readFile(file, (err, data) => {
       if (err) { res.writeHead(404); return res.end('Not found'); }
-      res.writeHead(200, {
-        'Content-Type': MIME[path.extname(file)] || 'application/octet-stream',
-      });
+      res.writeHead(200, { 'Content-Type': MIME[path.extname(file)] || 'application/octet-stream' });
       res.end(data);
     });
   }).listen(HTTP_PORT, '0.0.0.0', () => {

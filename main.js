@@ -208,12 +208,16 @@ ipcMain.on('set-ignore-mouse-events', (event, ignore) => {
   if (w) w.setIgnoreMouseEvents(ignore, { forward: true });
 });
 
+ipcMain.on('window-minimize', event => {
+  BrowserWindow.fromWebContents(event.sender)?.minimize();
+});
+
 ipcMain.handle('open-app-manager', (event, appsJson, ip, region) => {
   const parentWin = BrowserWindow.fromWebContents(event.sender);
   return new Promise(resolve => {
     const dlg = new BrowserWindow({
       width:     420,
-      height:    560,
+      height:    596,
       parent:    parentWin,
       modal:     true,
       frame:     false,

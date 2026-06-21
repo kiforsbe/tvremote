@@ -4,3 +4,5 @@ out/
 test-results/
 playwright-report/
 .playwright-mcp/
+.superpowers/
+docs/superpowers/

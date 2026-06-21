@@ -13,6 +13,7 @@ const WIN_H_NUMPAD   = 760;
 
 let mainWin;            // set once in app.whenReady()
 let _interactiveBounds; // set by renderer after layout, used by poller
+let _samsungDbCache = null; // loaded once on first /api/samsung-db request
 
 // Poll cursor position in main process — avoids IPC round-trip latency that
 // would cause setIgnoreMouseEvents(false) to arrive after mousedown.
@@ -51,6 +52,19 @@ function startHttpServer() {
       } catch (_) {
         res.writeHead(500); res.end('[]');
       }
+      return;
+    }
+
+    // ── Full Samsung app DB (cached in memory after first read) ───────────
+    if (pathname === '/api/samsung-db' && req.method === 'GET') {
+      if (!_samsungDbCache) {
+        try {
+          const raw = fs.readFileSync(path.join(__dirname, 'samsung-apps-db.json'), 'utf8');
+          _samsungDbCache = JSON.parse(raw).apps || [];
+        } catch (_) { _samsungDbCache = []; }
+      }
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify(_samsungDbCache));
       return;
     }
 

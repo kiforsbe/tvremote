@@ -78,6 +78,22 @@ function saveMediaApps(apps) {
   localStorage.setItem('mediaApps', JSON.stringify(apps));
 }
 
+// ── Samsung DB ────────────────────────────────────────────────────────────────
+
+let _samsungDb = null;
+
+async function ensureSamsungDb() {
+  if (_samsungDb) return;
+  try { _samsungDb = await fetch('/api/samsung-db').then(r => r.json()); }
+  catch (_) { _samsungDb = []; }
+}
+
+function ccForRegion(region) {
+  return Object.entries(CC_TO_REGION)
+    .filter(([, rid]) => rid === region)
+    .map(([cc]) => cc);
+}
+
 // ── WebSocket ─────────────────────────────────────────────────────────────────
 
 let ws = null;
@@ -154,6 +170,7 @@ function toggleSettings() {
   if (open) {
     document.getElementById('tvip').value = getIp() || '';
     document.getElementById('discover-results').innerHTML = '';
+    document.getElementById('region-select').value = getRegion();
   }
 }
 
@@ -252,6 +269,8 @@ function toggleEditMode() {
   searchEl.hidden = !_editMode;
   if (_editMode) {
     document.getElementById('search-input').value = '';
+    ensureSamsungDb().then(() => onSearchInput(''));
+  } else {
     document.getElementById('search-results').innerHTML = '';
   }
   renderAppList();
@@ -317,25 +336,42 @@ function renderAppList() {
 function onSearchInput(query) {
   const container = document.getElementById('search-results');
   container.innerHTML = '';
-  if (!query || query.trim().length < 2) return;
-  const q       = query.toLowerCase();
-  const region  = getRegion();
-  const catalog = catalogAppsForRegion(region);
-  const added   = new Set(_apps.map(a => a.id));
-  const matches = catalog.filter(a => a.name.toLowerCase().includes(q)).slice(0, 25);
 
-  for (const app of matches) {
-    const isAdded = added.has(app.id);
+  if (!_samsungDb) {
+    container.innerHTML = '<p style="padding:8px 2px;color:var(--dim);font-size:13px">Loading…</p>';
+    ensureSamsungDb().then(() => onSearchInput(query));
+    return;
+  }
+
+  const region     = getRegion();
+  const regionCCs  = new Set(ccForRegion(region));
+  const q          = (query || '').trim().toLowerCase();
+  let matches      = _samsungDb.filter(a => a.regions.some(cc => regionCCs.has(cc)));
+  if (q.length > 0) matches = matches.filter(a => a.name.toLowerCase().includes(q));
+
+  const addedAppIds    = new Set(_apps.map(a => a.appId));
+  const catalog        = catalogAppsForRegion(region);
+  const catalogByAppId = new Map(catalog.map(a => [a.appId, a]));
+
+  for (const dbApp of matches) {
+    const appId   = String(dbApp.id);
+    const isAdded = addedAppIds.has(appId);
+    const catApp  = catalogByAppId.get(appId);
+    const icon    = catApp?.icon || '📺';
+
     const btn = document.createElement('button');
     btn.className = 'search-result-btn';
     btn.disabled  = isAdded;
     btn.innerHTML = `
-      <span class="app-row-icon">${app.icon}</span>
-      <span>${app.name}</span>
+      <span class="app-row-icon">${icon}</span>
+      <span>${dbApp.name}</span>
       ${isAdded ? '<span class="search-added">Added</span>' : ''}
     `;
     if (!isAdded) {
       btn.onclick = () => {
+        const app = catApp || {
+          id: 'db-' + appId, name: dbApp.name, icon: '📺', appId, deepLink: false,
+        };
         _apps.push(app);
         saveMediaApps(_apps);
         renderAppList();
@@ -344,6 +380,17 @@ function onSearchInput(query) {
     }
     container.appendChild(btn);
   }
+}
+
+function resetToDefaults() {
+  const region = getRegion();
+  const cat    = catalogAppsForRegion(region);
+  const catMap = new Map(cat.map(a => [a.id, a]));
+  const defs   = REGION_DEFAULTS[region] || [];
+  _apps        = defs.map(id => catMap.get(id)).filter(Boolean);
+  saveMediaApps(_apps);
+  renderAppList();
+  onSearchInput(document.getElementById('search-input').value);
 }
 
 // ── YouTube deep-link popup ───────────────────────────────────────────────────
@@ -385,6 +432,25 @@ function showYouTubeDialog(appId) {
 // ── Init ──────────────────────────────────────────────────────────────────────
 
 document.addEventListener('DOMContentLoaded', () => {
+  // Populate region selector
+  const regionSel = document.getElementById('region-select');
+  REGIONS.forEach(r => {
+    const opt = document.createElement('option');
+    opt.value = r.id;
+    opt.textContent = r.label;
+    regionSel.appendChild(opt);
+  });
+  regionSel.value = getRegion();
+  regionSel.addEventListener('change', () => {
+    localStorage.setItem('tvregion', regionSel.value);
+    renderPinnedApps();
+    if (!document.getElementById('app-modal').hidden) {
+      _apps = loadMediaApps();
+      renderAppList();
+      if (_editMode) onSearchInput(document.getElementById('search-input').value);
+    }
+  });
+
   renderPinnedApps();
 
   setStatus('err');

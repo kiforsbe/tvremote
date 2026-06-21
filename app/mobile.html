@@ -355,6 +355,33 @@
     .search-result-btn:disabled { opacity: 0.4; }
     .search-added { color: var(--accent); font-size: 12px; margin-left: auto; flex-shrink: 0; }
 
+    /* ── Region select (settings panel) ─────────────────────────────────── */
+    .region-select-mobile {
+      width: 100%;
+      background: var(--btn);
+      border: 1px solid rgba(255,255,255,0.09);
+      border-radius: 10px;
+      color: var(--text);
+      font-size: 14px;
+      padding: 10px 12px;
+      height: 44px;
+      appearance: auto;
+    }
+    .region-select-mobile option { background: #1f1f1f; color: var(--text); }
+
+    /* ── Reset to defaults (app search panel) ───────────────────────────── */
+    .btn-reset-defaults {
+      padding: 10px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 10px;
+      color: var(--dim);
+      font-size: 13px;
+      text-align: center;
+      width: 100%;
+    }
+    .btn-reset-defaults:active { background: rgba(255,255,255,0.12); color: var(--text); }
+
     /* ── YouTube popup ───────────────────────────────────────────────────── */
     #yt-overlay {
       position: fixed; inset: 0; z-index: 200; display: none;
@@ -408,6 +435,7 @@
                autocomplete="off" spellcheck="false">
         <button class="btn btn-apply" onclick="applyIp()">▶</button>
       </div>
+      <select id="region-select" class="region-select-mobile"></select>
     </div>
 
     <div class="divider"></div>
@@ -515,6 +543,7 @@
       <input type="search" id="search-input" placeholder="Search to add apps…"
              inputmode="search" autocomplete="off" oninput="onSearchInput(this.value)">
       <div class="search-results" id="search-results"></div>
+      <button class="btn-reset-defaults" onclick="resetToDefaults()">Reset to defaults</button>
     </div>
   </div>
 

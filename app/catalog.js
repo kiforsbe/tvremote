@@ -41,26 +41,26 @@ const APP_CATALOG = [
   { id: 'spotify',    name: 'Spotify',      icon: '🎵',                  available: [],
     appIds: { default: '3201606009684' } },
   { id: 'applemusic', name: 'Apple Music',  icon: '🎶',                  available: [],
-    appIds: { default: '3201908019066' } },
+    appIds: { default: '3201908019041' } },
   { id: 'plex',       name: 'Plex',         icon: '🎬',                  available: [],
     appIds: { default: '3201512006963' } },
   { id: 'twitch',     name: 'Twitch',       icon: '🎮',                  available: [],
     appIds: { default: '3201611010185' } },
   { id: 'crunchyroll',name: 'Crunchyroll',  icon: '🍥',                  available: [],
-    appIds: { default: '3201611010411' } },
+    appIds: { default: '3202302030097' } },
   { id: 'dazn',       name: 'DAZN',         icon: '🥊',
     available: ['UK', 'DE', 'EU', 'AU', 'CA', 'US'],
     appIds: { default: '3202103020674' } }, // *
   { id: 'discovery',  name: 'Discovery+',   icon: '🔍',
     available: ['US', 'UK', 'EU', 'NORDIC', 'AU', 'CA', 'DE'],
-    appIds: { default: '3202010014885' } }, // *
+    appIds: { default: '3201803015944', US: '3202006021105' } },
 
   // ── United States ────────────────────────────────────────────────────────────
   { id: 'hulu',       name: 'Hulu',         icon: '🟢',  available: ['US'],
     appIds: { default: '3201601007625' } },
   { id: 'max',        name: 'Max',           icon: 'M',
     available: ['US', 'CA', 'EU', 'UK', 'NORDIC', 'AU', 'DE'],
-    appIds: { default: '3201601007230' } },
+    appIds: { default: '3202301029760' } },
   { id: 'peacock',    name: 'Peacock',       icon: '🦚',  available: ['US', 'UK'],
     appIds: { default: '3202005022341' } },
   { id: 'paramount',  name: 'Paramount+',    icon: '⛰',
@@ -84,21 +84,21 @@ const APP_CATALOG = [
 
   // ── Canada ───────────────────────────────────────────────────────────────────
   { id: 'crave',      name: 'Crave',         icon: '🍿',  available: ['CA'],
-    appIds: { default: '3201807016412' } }, // *
+    appIds: { default: '3201506003488' } },
   { id: 'cbcgem',     name: 'CBC Gem',       icon: '💎',  available: ['CA'],
-    appIds: { default: '3201809017237' } }, // *
+    appIds: { default: '3202205027481' } },
 
   // ── United Kingdom ────────────────────────────────────────────────────────────
   { id: 'bbc',        name: 'BBC iPlayer',   icon: '🟠',  available: ['UK'],
-    appIds: { default: '3201608010191' } }, // *
+    appIds: { default: '3201601007670' } },
   { id: 'itvx',       name: 'ITVX',          icon: '🔴',  available: ['UK'],
     appIds: { default: '3201604007382' } }, // *
   { id: 'channel4',   name: 'Channel 4',     icon: '4️⃣', available: ['UK'],
-    appIds: { default: '111299002148' } },  // *
+    appIds: { default: '111299002148' } },
   { id: 'channel5',   name: 'My5',           icon: '5️⃣', available: ['UK'],
     appIds: { default: '3201505006690' } }, // *
   { id: 'britbox',    name: 'BritBox',       icon: '🇬🇧', available: ['UK', 'US', 'CA', 'AU'],
-    appIds: { default: '3202101016148' } }, // *
+    appIds: { default: '3201905018484' } },
   { id: 'nowtv',      name: 'Now',           icon: '🌊',  available: ['UK', 'IE'],
     appIds: { default: '3201602007414' } }, // *
 
@@ -122,7 +122,7 @@ const APP_CATALOG = [
 
   // ── Germany / Austria / Switzerland ──────────────────────────────────────────
   { id: 'ardmed',     name: 'ARD Mediathek', icon: '🎭',  available: ['DE', 'EU'],
-    appIds: { default: '3201808016389' } }, // *
+    appIds: { default: '3201412000679' } },
   { id: 'zdfmed',     name: 'ZDF Mediathek', icon: '🎭',  available: ['DE', 'EU'],
     appIds: { default: '3201808016446' } }, // *
   { id: 'rtlplus',    name: 'RTL+',          icon: '📺',  available: ['DE', 'EU'],
@@ -140,15 +140,15 @@ const APP_CATALOG = [
   { id: 'stan',       name: 'Stan',          icon: '🌀',  available: ['AU'],
     appIds: { default: '3201606009219' } }, // *
   { id: 'ninenow',    name: '9Now',          icon: '9️⃣', available: ['AU'],
-    appIds: { default: '3202011015423' } }, // *
+    appIds: { default: '3201607010031' } },
   { id: 'tenplay',    name: '10 Play',       icon: '🔟',  available: ['AU'],
     appIds: { default: '3201901017453' } }, // *
   { id: 'sevenplus',  name: '7plus',         icon: '7️⃣', available: ['AU'],
     appIds: { default: '3202011016010' } }, // *
   { id: 'abciview',   name: 'ABC iview',     icon: '📻',  available: ['AU'],
-    appIds: { default: '3201606009381' } }, // *
+    appIds: { default: '3201812017479' } },
   { id: 'binge',      name: 'BINGE',         icon: '🎬',  available: ['AU'],
-    appIds: { default: '3202101016073' } }, // *
+    appIds: { default: '3202010022098' } },
 ];
 
 // Ordered default selection per region

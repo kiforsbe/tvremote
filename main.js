@@ -10,7 +10,24 @@ const WIN_W          = 400;
 const WIN_H          = 680;
 const WIN_H_NUMPAD   = 760;
 
-let mainWin; // set once in app.whenReady()
+let mainWin;            // set once in app.whenReady()
+let _interactiveBounds; // set by renderer after layout, used by poller
+
+// Poll cursor position in main process — avoids IPC round-trip latency that
+// would cause setIgnoreMouseEvents(false) to arrive after mousedown.
+function startIgnoreMousePoller(win) {
+  let prev = true;
+  setInterval(() => {
+    if (!win || win.isDestroyed() || win.isMinimized() || !_interactiveBounds) return;
+    const { x: mx, y: my } = screen.getCursorScreenPoint();
+    const [wx, wy] = win.getPosition();
+    const cx = mx - wx;
+    const cy = my - wy;
+    const b = _interactiveBounds;
+    const inside = cx >= b.left && cx <= b.right && cy >= b.top && cy <= b.bottom;
+    if (inside === prev) { prev = !inside; win.setIgnoreMouseEvents(!inside, { forward: true }); }
+  }, 16);
+}
 
 const MIME = {
   '.html': 'text/html; charset=utf-8',
@@ -205,10 +222,7 @@ ipcMain.handle('launch-app', (_event, ip, appId, metaTag) => {
   });
 });
 
-ipcMain.on('set-ignore-mouse-events', (event, ignore) => {
-  const w = BrowserWindow.fromWebContents(event.sender);
-  if (w) w.setIgnoreMouseEvents(ignore, { forward: true });
-});
+ipcMain.on('set-interactive-bounds', (_, b) => { _interactiveBounds = b; });
 
 ipcMain.on('window-minimize', event => {
   BrowserWindow.fromWebContents(event.sender)?.minimize();
@@ -351,6 +365,7 @@ app.whenReady().then(() => {
   });
 
   mainWin.setIgnoreMouseEvents(true, { forward: true });
+  startIgnoreMousePoller(mainWin);
 
   mainWin.loadFile(path.join(APP_DIR, 'index.html'));
   startHttpServer();

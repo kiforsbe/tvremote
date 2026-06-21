@@ -396,26 +396,29 @@ document.addEventListener('DOMContentLoaded', () => {
 
   drawerTab.addEventListener('mouseenter', openDrawer);
 
-  let _ignoreMouse = true;
-  let _closeTimer = null;
   const _containerEl = document.getElementById('remote-container');
+
+  // Report container bounds to main process so the poller can call
+  // setIgnoreMouseEvents synchronously without an IPC round-trip on mousedown.
+  function _sendBounds() {
+    const r = _containerEl.getBoundingClientRect();
+    window.electronAPI?.setInteractiveBounds({ left: r.left, top: r.top, right: r.right, bottom: r.bottom });
+  }
+  _sendBounds();
+  new ResizeObserver(_sendBounds).observe(_containerEl);
+
+  // Drawer auto-close: hide when cursor leaves the interactive area.
+  let _closeTimer = null;
+  let _prevNear   = true;
   document.addEventListener('mousemove', e => {
-    // elementFromPoint returns body/html for -webkit-app-region:drag elements,
-    // so check container bounds directly to catch the remote background.
-    const rect = _containerEl.getBoundingClientRect();
-    const inContainer = e.clientX >= rect.left && e.clientX <= rect.right &&
-                        e.clientY >= rect.top  && e.clientY <= rect.bottom;
-    let shouldIgnore;
-    if (inContainer) {
-      shouldIgnore = false;
-    } else {
-      const el = document.elementFromPoint(e.clientX, e.clientY);
-      shouldIgnore = !el || el === document.body || el.tagName === 'HTML';
-    }
-    if (shouldIgnore !== _ignoreMouse) {
-      _ignoreMouse = shouldIgnore;
-      window.electronAPI?.setIgnoreMouseEvents(shouldIgnore);
-      if (shouldIgnore) {
+    const r = _containerEl.getBoundingClientRect();
+    const inContainer = e.clientX >= r.left && e.clientX <= r.right &&
+                        e.clientY >= r.top  && e.clientY <= r.bottom;
+    const el   = inContainer ? null : document.elementFromPoint(e.clientX, e.clientY);
+    const near = inContainer || (el && el !== document.body && el.tagName !== 'HTML');
+    if (near !== _prevNear) {
+      _prevNear = near;
+      if (!near) {
         if (_closeTimer) clearTimeout(_closeTimer);
         _closeTimer = setTimeout(closeDrawer, 150);
       } else {

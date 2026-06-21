@@ -267,6 +267,7 @@
         const row = e.target.closest('[draggable]');
         if (!row) return;
         _ddIdx = enabledApps.findIndex(a => a.id === row.dataset.id);
+        if (_ddIdx === -1) { _ddIdx = null; return; }
         row.classList.add('dragging');
         e.dataTransfer.effectAllowed = 'move';
       });

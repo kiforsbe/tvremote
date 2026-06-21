@@ -418,6 +418,7 @@ document.addEventListener('DOMContentLoaded', () => {
       _ignoreMouse = shouldIgnore;
       window.electronAPI?.setIgnoreMouseEvents(shouldIgnore);
       if (shouldIgnore) {
+        if (_closeTimer) clearTimeout(_closeTimer);
         _closeTimer = setTimeout(closeDrawer, 150);
       } else {
         if (_closeTimer) { clearTimeout(_closeTimer); _closeTimer = null; }

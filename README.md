@@ -2,6 +2,7 @@
 
 <p align="center">
   <img src="docs/screenshot.png" width="200" alt="TV Remote screenshot">
+  <img src="docs/screenshot-drawer.png" width="200" alt="TV Remote with app drawer open">
 </p>
 
 A Samsung smart TV remote control for Windows and iPhone, built with Electron and served as a PWA.

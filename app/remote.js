@@ -353,26 +353,29 @@ document.addEventListener('DOMContentLoaded', () => {
   renderDrawer();
 
   const drawerTab       = document.getElementById('drawer-tab');
-  const remoteContainer = document.getElementById('remote-container');
   const manageBtn       = document.getElementById('drawer-manage-btn');
 
   drawerTab.addEventListener('click', () => {
-    if (remoteContainer.classList.contains('drawer-open')) closeDrawer();
+    if (document.getElementById('remote-container').classList.contains('drawer-open')) closeDrawer();
     else openDrawer();
   });
 
   drawerTab.addEventListener('mouseenter', openDrawer);
 
+  let _ignoreMouse = true;
   let _closeTimer = null;
-  remoteContainer.addEventListener('mouseleave', () => {
-    _closeTimer = setTimeout(() => {
-      closeDrawer();
-      window.electronAPI?.setIgnoreMouseEvents(true);
-    }, 150);
-  });
-  remoteContainer.addEventListener('mouseenter', () => {
-    if (_closeTimer) { clearTimeout(_closeTimer); _closeTimer = null; }
-    window.electronAPI?.setIgnoreMouseEvents(false);
+  document.addEventListener('mousemove', e => {
+    const el = document.elementFromPoint(e.clientX, e.clientY);
+    const shouldIgnore = !el || el === document.body || el.tagName === 'HTML';
+    if (shouldIgnore !== _ignoreMouse) {
+      _ignoreMouse = shouldIgnore;
+      window.electronAPI?.setIgnoreMouseEvents(shouldIgnore);
+      if (shouldIgnore) {
+        _closeTimer = setTimeout(closeDrawer, 150);
+      } else {
+        if (_closeTimer) { clearTimeout(_closeTimer); _closeTimer = null; }
+      }
+    }
   });
 
   manageBtn.addEventListener('click', () => {

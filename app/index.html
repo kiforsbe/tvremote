@@ -385,12 +385,18 @@
     }
 
     .remote {
+      position: relative;
       -webkit-app-region: drag;
     }
 
     /* ── Drawer tab ─────────────────────────────── */
     .drawer-tab {
+      position: absolute;
+      left: -12px;
+      top: 50%;
+      transform: translateY(-50%);
       width: 12px;
+      height: 56px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -399,12 +405,10 @@
       color: var(--text-dim);
       font-size: 9px;
       cursor: pointer;
-      align-self: center;
-      height: 56px;
-      flex-shrink: 0;
       transition: color 0.15s, background 0.15s;
       -webkit-app-region: no-drag;
       user-select: none;
+      z-index: 10;
     }
 
     .drawer-tab:hover {
@@ -579,9 +583,8 @@
       <button class="drawer-manage-btn" id="drawer-manage-btn">⚙ Manage</button>
     </div>
 
-    <div class="drawer-tab" id="drawer-tab">‹</div>
-
     <div class="remote">
+      <div class="drawer-tab" id="drawer-tab">‹</div>
 
       <div class="power-row">
         <div class="status-dot" id="status-dot"></div>

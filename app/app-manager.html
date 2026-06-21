@@ -105,6 +105,33 @@
     .btn-cancel:hover { background: rgba(255,255,255,0.1); }
     .btn-save   { background: #0067c0; color: #fff; }
     .btn-save:hover { background: #1975c9; }
+
+    /* ── Windows 11 scrollbar ───────────────────── */
+    #app-list::-webkit-scrollbar         { width: 6px; }
+    #app-list::-webkit-scrollbar-track   { background: transparent; }
+    #app-list::-webkit-scrollbar-thumb   {
+      background: rgba(255,255,255,0.22);
+      border-radius: 3px;
+    }
+    #app-list::-webkit-scrollbar-thumb:hover {
+      background: rgba(255,255,255,0.4);
+    }
+
+    /* ── Dialog drag-and-drop ───────────────────── */
+    .drag-handle {
+      font-size: 12px;
+      color: rgba(255,255,255,0.3);
+      cursor: grab;
+      flex-shrink: 0;
+      width: 16px;
+      text-align: center;
+      user-select: none;
+      -webkit-app-region: no-drag;
+    }
+    .drag-handle:active { cursor: grabbing; }
+    .app-row.dragging         { opacity: 0.4; }
+    .app-row.drag-over-top    { box-shadow: 0 -2px 0 0 #60cdff; }
+    .app-row.drag-over-bottom { box-shadow: 0  2px 0 0 #60cdff; }
   </style>
 </head>
 <body>
@@ -173,6 +200,15 @@
         const rowEl = document.createElement('div');
         rowEl.className = 'app-row';
 
+        if (app.enabled) {
+          rowEl.draggable = true;
+          rowEl.dataset.id = app.id;
+          const handle = document.createElement('span');
+          handle.className = 'drag-handle';
+          handle.textContent = '⠿';
+          rowEl.appendChild(handle);
+        }
+
         const cb = document.createElement('input');
         cb.type    = 'checkbox';
         cb.checked = app.enabled;
@@ -221,6 +257,55 @@
     }
 
     render();
+
+    // Drag-and-drop (delegated to #app-list — survives re-renders)
+    (function () {
+      const list = document.getElementById('app-list');
+      let _ddIdx = null;
+
+      list.addEventListener('dragstart', e => {
+        const row = e.target.closest('[draggable]');
+        if (!row) return;
+        _ddIdx = enabledApps.findIndex(a => a.id === row.dataset.id);
+        row.classList.add('dragging');
+        e.dataTransfer.effectAllowed = 'move';
+      });
+
+      list.addEventListener('dragover', e => {
+        e.preventDefault();
+        const row = e.target.closest('[draggable]');
+        list.querySelectorAll('.drag-over-top, .drag-over-bottom').forEach(el =>
+          el.classList.remove('drag-over-top', 'drag-over-bottom'));
+        if (!row || _ddIdx === null) return;
+        const rect = row.getBoundingClientRect();
+        row.classList.add(e.clientY < rect.top + rect.height / 2 ? 'drag-over-top' : 'drag-over-bottom');
+      });
+
+      list.addEventListener('drop', e => {
+        e.preventDefault();
+        const row = e.target.closest('[draggable]');
+        if (!row || _ddIdx === null) return;
+        const targetId  = row.dataset.id;
+        const targetIdx = enabledApps.findIndex(a => a.id === targetId);
+        const rect      = row.getBoundingClientRect();
+        const toIdx     = e.clientY < rect.top + rect.height / 2 ? targetIdx : targetIdx + 1;
+        // inline moveApp logic (no shared module in dialog)
+        if (_ddIdx !== toIdx && _ddIdx + 1 !== toIdx) {
+          const next = enabledApps.slice();
+          const [item] = next.splice(_ddIdx, 1);
+          next.splice(_ddIdx < toIdx ? toIdx - 1 : toIdx, 0, item);
+          enabledApps = next;
+          render();
+        }
+        _ddIdx = null;
+      });
+
+      list.addEventListener('dragend', () => {
+        _ddIdx = null;
+        list.querySelectorAll('.dragging, .drag-over-top, .drag-over-bottom').forEach(el =>
+          el.classList.remove('dragging', 'drag-over-top', 'drag-over-bottom'));
+      });
+    })();
 
     document.getElementById('btn-add').onclick = () => {
       const name  = document.getElementById('custom-name').value.trim();

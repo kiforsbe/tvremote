@@ -16,25 +16,23 @@ const KEY_MAP = {
   p:          'KEY_POWER',
 };
 
-const MEDIA_APPS_CATALOG = [
-  { id: 'youtube',     name: 'YouTube',     icon: '▶',  appId: '111299001912', deepLink: true  },
-  { id: 'netflix',     name: 'Netflix',     icon: 'N',  appId: '11101200001',  deepLink: false },
-  { id: 'prime',       name: 'Prime',       icon: '📦', appId: '3201910019365',deepLink: false },
-  { id: 'disney',      name: 'Disney+',     icon: '🏰', appId: '3201901017640',deepLink: false },
-  { id: 'spotify',     name: 'Spotify',     icon: '🎵', appId: '3201606009684',deepLink: false },
-  { id: 'max',         name: 'Max',         icon: 'M',  appId: '3201601007230',deepLink: false },
-  { id: 'appletv',     name: 'Apple TV+',   icon: '',  appId: '3201807016597',deepLink: false },
-  { id: 'applemusic',  name: 'Apple Music', icon: '🎶', appId: '3201908019066',deepLink: false },
-  { id: 'hulu',        name: 'Hulu',        icon: '🟢', appId: '3201601007625',deepLink: false },
-  { id: 'paramount',   name: 'Paramount+',  icon: '⛰', appId: '3201711015986',deepLink: false },
-  { id: 'peacock',     name: 'Peacock',     icon: '🦚', appId: '3202005022341',deepLink: false },
-  { id: 'tubi',        name: 'Tubi',        icon: '📺', appId: '3201504901843',deepLink: false },
-  { id: 'pluto',       name: 'Pluto TV',    icon: '🪐', appId: '3202008022518',deepLink: false },
-  { id: 'crunchyroll', name: 'Crunchyroll', icon: '🍥', appId: '3201611010411',deepLink: false },
-];
+// catalog.js is loaded before this script in index.html —
+// APP_CATALOG, REGION_DEFAULTS, CC_TO_REGION are available as globals.
 
 function getRegion() {
   return localStorage.getItem('tvregion') || 'US';
+}
+
+function catalogAppsForRegion(region) {
+  return APP_CATALOG
+    .filter(a => a.available.length === 0 || a.available.includes(region))
+    .map(a => ({
+      id:       a.id,
+      name:     a.name,
+      icon:     a.icon,
+      appId:    a.appIds[region] || a.appIds.default,
+      deepLink: a.deepLink || false,
+    }));
 }
 
 function loadMediaApps() {
@@ -42,7 +40,11 @@ function loadMediaApps() {
     const raw = localStorage.getItem('mediaApps');
     if (raw) return JSON.parse(raw);
   } catch (_) {}
-  return MEDIA_APPS_CATALOG.slice(0, 3);
+  const region   = getRegion();
+  const cat      = catalogAppsForRegion(region);
+  const catMap   = new Map(cat.map(a => [a.id, a]));
+  const defaults = REGION_DEFAULTS[region] || [];
+  return defaults.map(id => catMap.get(id)).filter(Boolean);
 }
 
 function saveMediaApps(apps) {
@@ -180,7 +182,7 @@ function renderPinnedApps() {
     btn.title = app.name;
     btn.textContent = app.icon;
     btn.onclick = e => {
-      if (e.shiftKey && app.deepLink) { showYouTubeInput(btn, app.appId); }
+      if (e.shiftKey && app.deepLink) { showYouTubeDialog(app.appId); }
       else { launchApp(app.appId); }
     };
     container.appendChild(btn);
@@ -221,7 +223,7 @@ function renderDrawer() {
     appBtn.appendChild(iconEl);
     appBtn.appendChild(nameEl);
     appBtn.onclick = e => {
-      if (e.shiftKey && app.deepLink) { showYouTubeInput(appBtn, app.appId); }
+      if (e.shiftKey && app.deepLink) { showYouTubeDialog(app.appId); }
       else { launchApp(app.appId); }
     };
 
@@ -286,53 +288,38 @@ function closeDrawer() {
   document.getElementById('drawer-tab').textContent = '‹';
 }
 
-function showYouTubeInput(anchorEl, appId) {
-  const existing = document.getElementById('yt-input-row');
-  if (existing) existing.remove();
+function showYouTubeDialog(appId) {
+  const overlay   = document.getElementById('yt-overlay');
+  const input     = document.getElementById('yt-url-input');
+  const errEl     = document.getElementById('yt-err');
+  const playBtn   = document.getElementById('yt-play-btn');
+  const cancelBtn = document.getElementById('yt-cancel-btn');
 
-  const row = document.createElement('div');
-  row.id = 'yt-input-row';
-  row.className = 'yt-input-row';
+  input.value  = '';
+  errEl.hidden = true;
+  overlay.classList.add('visible');
+  setTimeout(() => input.focus(), 40);
 
-  const input = document.createElement('input');
-  input.type = 'text';
-  input.className = 'yt-input';
-  input.placeholder = 'YouTube URL or video ID';
-
-  const actionsDiv = document.createElement('div');
-  actionsDiv.className = 'yt-input-actions';
-
-  const confirmBtn = document.createElement('button');
-  confirmBtn.className = 'btn yt-confirm-btn';
-  confirmBtn.textContent = '▶';
-
-  const err = document.createElement('span');
-  err.className = 'yt-input-err';
-  err.hidden = true;
-  err.textContent = 'Not a valid YouTube URL or ID';
-
-  const submit = () => {
+  function submit() {
     const videoId = parseYouTubeVideoId(input.value);
-    if (!videoId) { err.hidden = false; return; }
+    if (!videoId) { errEl.hidden = false; return; }
     launchApp(appId, videoId);
-    row.remove();
+    close();
+  }
+
+  function close() {
+    overlay.classList.remove('visible');
+    playBtn.onclick   = null;
+    cancelBtn.onclick = null;
+    input.onkeydown   = null;
+  }
+
+  playBtn.onclick   = submit;
+  cancelBtn.onclick = close;
+  input.onkeydown   = e => {
+    if (e.key === 'Enter')  { e.preventDefault(); submit(); }
+    if (e.key === 'Escape') { e.preventDefault(); close(); }
   };
-
-  confirmBtn.onclick = submit;
-  input.addEventListener('keydown', e => {
-    if (e.key === 'Enter')  submit();
-    if (e.key === 'Escape') row.remove();
-  });
-
-  actionsDiv.appendChild(input);
-  actionsDiv.appendChild(confirmBtn);
-  row.appendChild(actionsDiv);
-  row.appendChild(err);
-
-  const parent = anchorEl.closest('.drawer-app-row') || anchorEl.closest('.pinned-apps');
-  if (parent) parent.after(row);
-  else        anchorEl.after(row);
-  input.focus();
 }
 
 function toggleNumpad() {

@@ -531,46 +531,78 @@
       font-size: 16px;
     }
 
-    /* ── YouTube inline input ───────────────────── */
-    .yt-input-row {
+    /* ── YouTube URL popup ──────────────────────── */
+    #yt-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 1000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      -webkit-app-region: no-drag;
+      font-family: 'Segoe UI Variable Text', 'Segoe UI', system-ui, sans-serif;
+    }
+    #yt-overlay.visible { display: flex; }
+
+    #yt-popup {
+      background: #252525;
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 8px;
+      padding: 18px 20px 16px;
+      width: 280px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.6);
       display: flex;
       flex-direction: column;
-      gap: 4px;
-      padding: 4px 6px;
-      width: 100%;
+      gap: 12px;
     }
 
-    .yt-input {
-      flex: 1;
-      min-width: 0;
-      background: var(--btn);
-      border: 1px solid #2a2a2a;
-      color: var(--text);
-      padding: 5px 7px;
-      border-radius: 6px;
-      font-size: 10px;
+    #yt-popup h3 {
+      font-size: 13px;
+      font-weight: 600;
+      color: rgba(255,255,255,0.95);
+    }
+
+    #yt-url-input {
+      height: 30px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.09);
+      border-bottom-color: rgba(255,255,255,0.45);
+      border-radius: 4px;
+      color: rgba(255,255,255,0.95);
+      font-family: inherit;
+      font-size: 13px;
+      padding: 0 10px;
       outline: none;
       width: 100%;
     }
-    .yt-input:focus { border-color: #555; }
+    #yt-url-input:focus { border-bottom-color: #60cdff; }
 
-    .yt-input-actions {
+    #yt-err {
+      font-size: 11px;
+      color: #f1665a;
+      margin-top: -6px;
+    }
+
+    .yt-popup-actions {
       display: flex;
-      gap: 4px;
+      gap: 8px;
+      justify-content: flex-end;
     }
 
-    .yt-confirm-btn {
-      width: 28px;
-      height: 24px;
-      border-radius: 6px;
-      font-size: 10px;
-      flex-shrink: 0;
+    .yt-popup-actions button {
+      height: 28px;
+      padding: 0 14px;
+      border-radius: 4px;
+      font-family: inherit;
+      font-size: 13px;
+      cursor: pointer;
+      border: 1px solid transparent;
     }
 
-    .yt-input-err {
-      font-size: 9px;
-      color: #e74c3c;
-    }
+    #yt-cancel-btn { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.09); color: rgba(255,255,255,0.9); }
+    #yt-cancel-btn:hover { background: rgba(255,255,255,0.1); }
+    #yt-play-btn   { background: #0067c0; color: #fff; }
+    #yt-play-btn:hover { background: #1975c9; }
   </style>
 </head>
 <body>
@@ -675,6 +707,19 @@
     </div><!-- /.remote -->
 
   </div><!-- /.remote-container -->
+
+  <!-- YouTube URL popup -->
+  <div id="yt-overlay">
+    <div id="yt-popup">
+      <h3>Play YouTube video</h3>
+      <input type="text" id="yt-url-input" placeholder="URL or video ID" autocomplete="off" spellcheck="false">
+      <div id="yt-err" hidden>Not a valid YouTube URL or video ID</div>
+      <div class="yt-popup-actions">
+        <button id="yt-cancel-btn">Cancel</button>
+        <button id="yt-play-btn">Play</button>
+      </div>
+    </div>
+  </div>
 
   <script src="catalog.js"></script>
   <script src="remote.js"></script>

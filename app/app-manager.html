@@ -100,12 +100,6 @@
       font-size: 11px;
     }
 
-    .divider { height: 1px; background: rgba(255,255,255,0.08); flex-shrink: 0; }
-
-    .custom-section { display: flex; flex-direction: column; gap: 6px; flex-shrink: 0; }
-    .custom-section label { font-size: 12px; color: rgba(255,255,255,0.6); }
-    .custom-row { display: flex; gap: 6px; }
-
     input[type=text] {
       height: 30px;
       background: rgba(255,255,255,0.06);
@@ -119,22 +113,14 @@
       outline: none;
     }
     input[type=text]:focus { border-bottom-color: #60cdff; }
-
-    .input-name { flex: 1; }
-    .input-appid { width: 120px; font-family: monospace; }
-
-    .btn-add {
-      height: 30px; padding: 0 12px;
-      background: rgba(255,255,255,0.06);
-      border: 1px solid rgba(255,255,255,0.09);
-      border-radius: 4px;
-      color: rgba(255,255,255,0.95);
-      font-family: inherit; font-size: 13px;
-      cursor: pointer; flex-shrink: 0;
+    input[type=text]:disabled {
+      opacity: 0.5;
+      cursor: default;
+      border-bottom-color: rgba(255,255,255,0.2);
     }
-    .btn-add:hover { background: rgba(255,255,255,0.1); }
 
-    .actions { display: flex; gap: 8px; justify-content: flex-end; flex-shrink: 0; }
+    .actions { display: flex; gap: 8px; justify-content: space-between; align-items: center; flex-shrink: 0; }
+    .actions-group { display: flex; gap: 8px; }
 
     .btn-action {
       height: 32px; min-width: 80px; padding: 0 16px;
@@ -245,8 +231,8 @@
     .ctx-item.danger { color: rgba(255,100,100,0.9); }
     .ctx-item.danger:hover { background: rgba(255,80,80,0.12); }
 
-    /* ── App ID edit popup ──────────────────────── */
-    #appid-overlay {
+    /* ── App dialog (add / edit / set ID) ──────── */
+    #app-dialog-overlay {
       position: fixed; inset: 0;
       z-index: 200;
       display: none;
@@ -255,9 +241,9 @@
       background: rgba(0,0,0,0.45);
       -webkit-app-region: no-drag;
     }
-    #appid-overlay.visible { display: flex; }
+    #app-dialog-overlay.visible { display: flex; }
 
-    #appid-popup {
+    #app-dialog {
       background: #252525;
       border: 1px solid rgba(255,255,255,0.12);
       border-radius: 8px;
@@ -268,14 +254,16 @@
       flex-direction: column;
       gap: 12px;
     }
-    #appid-popup h2 { font-size: 13px; font-weight: 600; }
-    #appid-popup .subtitle {
+    #app-dialog h2 { font-size: 13px; font-weight: 600; }
+    .dialog-field { display: flex; flex-direction: column; gap: 4px; }
+    .dialog-field label { font-size: 11px; color: rgba(255,255,255,0.5); }
+    .dialog-hint {
       font-size: 11px;
-      color: rgba(255,255,255,0.45);
-      margin-top: -8px;
+      color: rgba(255,255,255,0.4);
       font-family: 'Cascadia Code', 'Consolas', monospace;
+      margin-top: -4px;
     }
-    #appid-input {
+    #dialog-appid-input {
       font-family: 'Cascadia Code', 'Consolas', monospace;
       font-size: 12px;
     }
@@ -285,10 +273,10 @@
       border-radius: 4px; font-family: inherit; font-size: 13px;
       cursor: pointer; border: 1px solid transparent;
     }
-    #popup-cancel { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.09); color: rgba(255,255,255,0.9); }
-    #popup-cancel:hover { background: rgba(255,255,255,0.1); }
-    #popup-ok     { background: #0067c0; color: #fff; }
-    #popup-ok:hover { background: #1975c9; }
+    #dialog-cancel { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.09); color: rgba(255,255,255,0.9); }
+    #dialog-cancel:hover { background: rgba(255,255,255,0.1); }
+    #dialog-ok     { background: #0067c0; color: #fff; }
+    #dialog-ok:hover { background: #1975c9; }
   </style>
 </head>
 <body>
@@ -324,38 +312,38 @@
 
     <div class="app-list" id="app-list"></div>
 
-    <div class="divider"></div>
-
-    <div class="custom-section">
-      <label>Add custom app</label>
-      <div class="custom-row">
-        <input type="text" class="input-name"  id="custom-name"  placeholder="App name">
-        <input type="text" class="input-appid" id="custom-appid" placeholder="Samsung App ID">
-        <button class="btn-add" id="btn-add">+ Add</button>
-      </div>
-    </div>
-
     <div class="actions">
-      <button class="btn-action btn-cancel" id="btn-cancel">Cancel</button>
-      <button class="btn-action btn-save"   id="btn-save">Save</button>
+      <button class="btn-action btn-cancel" id="btn-add-app">+ Add app</button>
+      <div class="actions-group">
+        <button class="btn-action btn-cancel" id="btn-cancel">Cancel</button>
+        <button class="btn-action btn-save"   id="btn-save">Save</button>
+      </div>
     </div>
   </div>
 
   <!-- Right-click context menu -->
   <div id="ctx-menu">
-    <div class="ctx-item" id="ctx-set-id">Set App ID…</div>
-    <div class="ctx-item danger" id="ctx-reset-id" style="display:none">Reset to default</div>
+    <div class="ctx-item" id="ctx-edit">Set App ID…</div>
+    <div class="ctx-item" id="ctx-reset-id" style="display:none">Reset to default</div>
+    <div class="ctx-item danger" id="ctx-remove" style="display:none">Remove</div>
   </div>
 
-  <!-- App ID edit popup -->
-  <div id="appid-overlay">
-    <div id="appid-popup">
-      <h2 id="popup-title">Set App ID</h2>
-      <div class="subtitle" id="popup-current"></div>
-      <input type="text" id="appid-input" placeholder="Samsung App ID" spellcheck="false" autocomplete="off">
+  <!-- Unified app dialog (add / edit / set ID) -->
+  <div id="app-dialog-overlay">
+    <div id="app-dialog">
+      <h2 id="dialog-title">Add App</h2>
+      <div class="dialog-field">
+        <label>App name</label>
+        <input type="text" id="dialog-name-input" placeholder="e.g. My Channel" autocomplete="off">
+      </div>
+      <div class="dialog-field">
+        <label>Samsung App ID</label>
+        <input type="text" id="dialog-appid-input" placeholder="e.g. 3201601007625" spellcheck="false" autocomplete="off">
+        <div class="dialog-hint" id="dialog-hint"></div>
+      </div>
       <div class="popup-actions">
-        <button id="popup-cancel">Cancel</button>
-        <button id="popup-ok">OK</button>
+        <button id="dialog-cancel">Cancel</button>
+        <button id="dialog-ok">Add</button>
       </div>
     </div>
   </div>
@@ -504,10 +492,11 @@
 
     // ── Right-click context menu ─────────────────────────────────────────────
     (function () {
-      const menu      = document.getElementById('ctx-menu');
-      const itemSet   = document.getElementById('ctx-set-id');
-      const itemReset = document.getElementById('ctx-reset-id');
-      let _ctxApp     = null;
+      const menu       = document.getElementById('ctx-menu');
+      const itemEdit   = document.getElementById('ctx-edit');
+      const itemReset  = document.getElementById('ctx-reset-id');
+      const itemRemove = document.getElementById('ctx-remove');
+      let _ctxApp      = null;
 
       function hideMenu() {
         menu.classList.remove('visible');
@@ -519,15 +508,18 @@
         const row = e.target.closest('.app-row');
         if (!row) return;
 
-        const id  = row.dataset.id;
+        const id   = row.dataset.id;
         const rows = buildRows();
         _ctxApp = rows.find(a => a.id === id) || null;
         if (!_ctxApp) return;
 
-        itemReset.style.display = appIdOverrides.has(id) ? '' : 'none';
+        const isCustom = !!_ctxApp.custom;
+        itemEdit.textContent       = isCustom ? 'Edit…' : 'Set App ID…';
+        itemReset.style.display    = (!isCustom && appIdOverrides.has(id)) ? '' : 'none';
+        itemRemove.style.display   = isCustom ? '' : 'none';
 
-        // Position within viewport bounds
-        const mw = 160, mh = itemReset.style.display === 'none' ? 36 : 68;
+        const visibleItems = 1 + (itemReset.style.display ? 0 : 1) + (isCustom ? 1 : 0);
+        const mw = 160, mh = visibleItems * 34 + 8;
         const x  = Math.min(e.clientX, window.innerWidth  - mw - 8);
         const y  = Math.min(e.clientY, window.innerHeight - mh - 8);
         menu.style.left = x + 'px';
@@ -539,11 +531,11 @@
         if (!menu.contains(e.target)) hideMenu();
       });
 
-      itemSet.onclick = () => {
+      itemEdit.onclick = () => {
         if (!_ctxApp) return;
         const app = _ctxApp;
         hideMenu();
-        openAppIdPopup(app);
+        openAppDialog(app.custom ? 'edit-custom' : 'set-id', app);
       };
 
       itemReset.onclick = () => {
@@ -560,30 +552,79 @@
         hideMenu();
         render();
       };
+
+      itemRemove.onclick = () => {
+        if (!_ctxApp) return;
+        enabledApps = enabledApps.filter(a => a.id !== _ctxApp.id);
+        hideMenu();
+        render();
+      };
     })();
 
-    // ── App ID popup ─────────────────────────────────────────────────────────
-    function openAppIdPopup(app) {
-      const overlay  = document.getElementById('appid-overlay');
-      const input    = document.getElementById('appid-input');
-      const title    = document.getElementById('popup-title');
-      const subtitle = document.getElementById('popup-current');
+    // ── Unified app dialog ────────────────────────────────────────────────────
+    // mode: 'add'         → add new custom app (both fields editable, "Add" button)
+    // mode: 'edit-custom' → edit existing custom app (both fields editable, "Save" button)
+    // mode: 'set-id'      → override catalog app's ID (name disabled, "OK" button)
+    function openAppDialog(mode, app) {
+      const overlay   = document.getElementById('app-dialog-overlay');
+      const titleEl   = document.getElementById('dialog-title');
+      const nameInput = document.getElementById('dialog-name-input');
+      const idInput   = document.getElementById('dialog-appid-input');
+      const hintEl    = document.getElementById('dialog-hint');
+      const okBtn     = document.getElementById('dialog-ok');
 
-      title.textContent    = 'Set App ID — ' + app.name;
-      subtitle.textContent = 'catalog default: ' + (app.appId || '—');
-      input.value          = effectiveAppId(app) || '';
+      if (mode === 'add') {
+        titleEl.textContent    = 'Add Custom App';
+        okBtn.textContent      = 'Add';
+        nameInput.value        = '';
+        nameInput.disabled     = false;
+        idInput.value          = '';
+        hintEl.textContent     = '';
+      } else if (mode === 'edit-custom') {
+        titleEl.textContent    = 'Edit App';
+        okBtn.textContent      = 'Save';
+        nameInput.value        = app.name;
+        nameInput.disabled     = false;
+        idInput.value          = app.appId || '';
+        hintEl.textContent     = '';
+      } else { // 'set-id'
+        titleEl.textContent    = app.name;
+        okBtn.textContent      = 'OK';
+        nameInput.value        = app.name;
+        nameInput.disabled     = true;
+        idInput.value          = effectiveAppId(app) || '';
+        hintEl.textContent     = app.appId ? 'catalog default: ' + app.appId : '';
+      }
+
       overlay.classList.add('visible');
-      setTimeout(() => { input.focus(); input.select(); }, 50);
+      setTimeout(() => {
+        const focusTarget = nameInput.disabled ? idInput : nameInput;
+        focusTarget.focus();
+        if (mode !== 'add') focusTarget.select();
+      }, 50);
 
       function confirm() {
-        const val = input.value.trim();
-        if (val && val !== app.appId) {
-          appIdOverrides.set(app.id, val);
+        const name  = nameInput.value.trim();
+        const appId = idInput.value.trim();
+        if (!appId) return;
+
+        if (mode === 'add') {
+          if (!name) return;
+          enabledApps.push({ id: 'custom-' + Date.now(), name, icon: '★', appId, deepLink: false, custom: true });
+        } else if (mode === 'edit-custom') {
+          if (!name) return;
           const idx = enabledApps.findIndex(a => a.id === app.id);
-          if (idx !== -1) enabledApps[idx] = { ...enabledApps[idx], appId: val };
-        } else if (!val || val === app.appId) {
-          appIdOverrides.delete(app.id);
+          if (idx !== -1) enabledApps[idx] = { ...enabledApps[idx], name, appId };
+        } else { // 'set-id'
+          if (appId !== app.appId) {
+            appIdOverrides.set(app.id, appId);
+            const idx = enabledApps.findIndex(a => a.id === app.id);
+            if (idx !== -1) enabledApps[idx] = { ...enabledApps[idx], appId };
+          } else {
+            appIdOverrides.delete(app.id);
+          }
         }
+
         tvAvailable = null;
         close();
         render();
@@ -591,17 +632,18 @@
 
       function close() {
         overlay.classList.remove('visible');
-        document.getElementById('popup-ok').onclick     = null;
-        document.getElementById('popup-cancel').onclick = null;
-        input.onkeydown = null;
+        okBtn.onclick                                       = null;
+        document.getElementById('dialog-cancel').onclick   = null;
+        nameInput.onkeydown = idInput.onkeydown             = null;
       }
 
-      document.getElementById('popup-ok').onclick     = confirm;
-      document.getElementById('popup-cancel').onclick = close;
-      input.onkeydown = e => {
+      okBtn.onclick = confirm;
+      document.getElementById('dialog-cancel').onclick = close;
+      const onKey = e => {
         if (e.key === 'Enter')  { e.preventDefault(); confirm(); }
         if (e.key === 'Escape') { e.preventDefault(); close(); }
       };
+      nameInput.onkeydown = idInput.onkeydown = onKey;
     }
 
     // ── Sync with TV ─────────────────────────────────────────────────────────
@@ -696,17 +738,8 @@
       });
     })();
 
-    // ── Add custom app ───────────────────────────────────────────────────────
-    document.getElementById('btn-add').onclick = () => {
-      const name  = document.getElementById('custom-name').value.trim();
-      const appId = document.getElementById('custom-appid').value.trim();
-      if (!name || !appId) return;
-      const id = 'custom-' + Date.now();
-      enabledApps.push({ id, name, icon: '★', appId, deepLink: false, custom: true });
-      document.getElementById('custom-name').value  = '';
-      document.getElementById('custom-appid').value = '';
-      render();
-    };
+    // ── Add app button ────────────────────────────────────────────────────────
+    document.getElementById('btn-add-app').onclick = () => openAppDialog('add', null);
 
     // ── Save / Cancel ────────────────────────────────────────────────────────
     document.getElementById('btn-save').onclick = () =>
@@ -714,7 +747,7 @@
     document.getElementById('btn-cancel').onclick = () => window.appManagerAPI.cancel();
 
     document.addEventListener('keydown', e => {
-      if (e.key === 'Escape' && !document.getElementById('appid-overlay').classList.contains('visible')) {
+      if (e.key === 'Escape' && !document.getElementById('app-dialog-overlay').classList.contains('visible')) {
         window.appManagerAPI.cancel();
       }
     });

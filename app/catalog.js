@@ -45,7 +45,7 @@ const APP_CATALOG = [
   { id: 'plex',       name: 'Plex',         icon: '🎬',                  available: [],
     appIds: { default: '3201512006963' } },
   { id: 'twitch',     name: 'Twitch',       icon: '🎮',                  available: [],
-    appIds: { default: '3201611010185' } },
+    appIds: { default: '3202203026841' } },
   { id: 'crunchyroll',name: 'Crunchyroll',  icon: '🍥',                  available: [],
     appIds: { default: '3202302030097' } },
   { id: 'dazn',       name: 'DAZN',         icon: '🥊',
@@ -61,11 +61,11 @@ const APP_CATALOG = [
   { id: 'max',        name: 'Max',           icon: 'M',
     available: ['US', 'CA', 'EU', 'UK', 'NORDIC', 'AU', 'DE'],
     appIds: { default: '3202301029760' } },
-  { id: 'peacock',    name: 'Peacock',       icon: '🦚',  available: ['US', 'UK'],
-    appIds: { default: '3202005022341' } },
+  { id: 'peacock',    name: 'Peacock',       icon: '🦚',  available: ['US'],
+    appIds: { default: '3202006020991' } },
   { id: 'paramount',  name: 'Paramount+',    icon: '⛰',
-    available: ['US', 'CA', 'UK', 'AU', 'EU', 'NORDIC', 'DE'],
-    appIds: { default: '3201711015986' } },
+    available: ['US', 'CA', 'UK', 'AU', 'EU', 'DE'],
+    appIds: { default: '3202110025305', US: '3201710014981' } },
   { id: 'tubi',       name: 'Tubi',          icon: '📺',  available: ['US', 'CA', 'AU'],
     appIds: { default: '3201504901843' } },
   { id: 'pluto',      name: 'Pluto TV',      icon: '🪐',
@@ -104,21 +104,23 @@ const APP_CATALOG = [
 
   // ── Nordic ────────────────────────────────────────────────────────────────────
   { id: 'viaplay',    name: 'Viaplay',       icon: 'V',   available: ['NORDIC', 'EU', 'UK'],
-    appIds: { default: '3201902016590' } }, // *
+    appIds: { default: '11111300404' } },
   { id: 'svtplay',    name: 'SVT Play',      icon: '🏛',  available: ['NORDIC'],
-    appIds: { default: '3201801014814' } }, // * SE
+    appIds: { default: '3201612011287' } },
   { id: 'tv4play',    name: 'TV4 Play',      icon: '4️⃣', available: ['NORDIC'],
-    appIds: { default: '3201907018486' } }, // * SE
+    appIds: { default: '3202306031514' } },
   { id: 'cmore',      name: 'C More',        icon: '🎬',  available: ['NORDIC'],
     appIds: { default: '3201705012147' } }, // *
   { id: 'nrk',        name: 'NRK TV',        icon: '🎙',  available: ['NORDIC'],
-    appIds: { default: '3201606009569' } }, // * NO
+    appIds: { default: '3202012022410' } },
   { id: 'tv2play',    name: 'TV 2 Play',     icon: '2️⃣', available: ['NORDIC'],
-    appIds: { default: '3201811016102' } }, // * NO/DK
+    appIds: { default: '111399002181' } },  // NO
+  { id: 'tv2play_dk', name: 'TV 2 PLAY',    icon: '2️⃣', available: ['NORDIC'],
+    appIds: { default: '3202204027042' } }, // DK
   { id: 'drtv',       name: 'DR TV',         icon: '🎭',  available: ['NORDIC'],
     appIds: { default: '3201803015892' } }, // * DK
   { id: 'yle',        name: 'Yle Areena',    icon: '🎙',  available: ['NORDIC'],
-    appIds: { default: '3201606009531' } }, // * FI
+    appIds: { default: '3202104023586' } },
 
   // ── Germany / Austria / Switzerland ──────────────────────────────────────────
   { id: 'ardmed',     name: 'ARD Mediathek', icon: '🎭',  available: ['DE', 'EU'],
@@ -160,7 +162,7 @@ const REGION_DEFAULTS = {
   UK:     ['youtube', 'netflix', 'prime', 'disney', 'appletv', 'bbc', 'itvx', 'channel4',
            'channel5', 'nowtv', 'peacock', 'paramount', 'spotify', 'crunchyroll'],
   NORDIC: ['youtube', 'netflix', 'prime', 'disney', 'appletv', 'viaplay', 'svtplay',
-           'tv4play', 'nrk', 'tv2play', 'drtv', 'yle', 'max', 'spotify', 'crunchyroll'],
+           'tv4play', 'nrk', 'tv2play', 'tv2play_dk', 'drtv', 'yle', 'max', 'spotify', 'crunchyroll'],
   DE:     ['youtube', 'netflix', 'prime', 'disney', 'appletv', 'ardmed', 'zdfmed',
            'rtlplus', 'joyn', 'max', 'paramount', 'spotify', 'dazn'],
   EU:     ['youtube', 'netflix', 'prime', 'disney', 'appletv', 'max', 'paramount',

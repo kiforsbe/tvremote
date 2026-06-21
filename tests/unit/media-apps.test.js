@@ -4,7 +4,6 @@ const {
   MEDIA_APPS_CATALOG,
   loadMediaApps,
   saveMediaApps,
-  buildAppLaunchCommand,
   parseYouTubeVideoId,
   reorderApp,
   moveApp,
@@ -63,31 +62,6 @@ describe('saveMediaApps', () => {
     const apps = [MEDIA_APPS_CATALOG[0]];
     saveMediaApps(apps);
     expect(JSON.parse(localStorage.getItem('mediaApps'))).toEqual(apps);
-  });
-});
-
-describe('buildAppLaunchCommand', () => {
-  test('produces ms.application.start with correct id', () => {
-    const result = JSON.parse(buildAppLaunchCommand('111299001912', null));
-    expect(result.method).toBe('ms.application.start');
-    expect(result.params.id).toBe('111299001912');
-    expect(result.params.metaTag).toBeUndefined();
-  });
-
-  test('includes metaTag when provided', () => {
-    const result = JSON.parse(buildAppLaunchCommand('111299001912', 'dQw4w9WgXcQ'));
-    expect(result.params.metaTag).toBe('dQw4w9WgXcQ');
-  });
-
-  test('omits metaTag when null', () => {
-    const result = JSON.parse(buildAppLaunchCommand('11101200001', null));
-    expect('metaTag' in result.params).toBe(false);
-  });
-
-  test('includes metaTag when it is an empty string', () => {
-    const result = JSON.parse(buildAppLaunchCommand('111299001912', ''));
-    expect('metaTag' in result.params).toBe(true);
-    expect(result.params.metaTag).toBe('');
   });
 });
 

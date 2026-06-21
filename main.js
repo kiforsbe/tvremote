@@ -10,6 +10,8 @@ const WIN_W          = 400;
 const WIN_H          = 680;
 const WIN_H_NUMPAD   = 760;
 
+let mainWin; // set once in app.whenReady()
+
 const MIME = {
   '.html': 'text/html; charset=utf-8',
   '.json': 'application/json',
@@ -142,12 +144,12 @@ function discoverTvs() {
 }
 
 ipcMain.handle('open-ip-dialog', (event, currentIp) => {
-  const mainWin = BrowserWindow.fromWebContents(event.sender);
+  const parentWin = BrowserWindow.fromWebContents(event.sender);
   return new Promise(resolve => {
     const dlg = new BrowserWindow({
       width:     380,
       height:    280,
-      parent:    mainWin,
+      parent:    parentWin,
       modal:     true,
       frame:     false,
       resizable: false,
@@ -163,8 +165,8 @@ ipcMain.handle('open-ip-dialog', (event, currentIp) => {
 
     dlg.loadFile(path.join(__dirname, 'ip-dialog.html'), { query: { ip: currentIp } });
 
-    const onSave = (_, ip) => { cleanup(); dlg.close(); resolve(ip); };
-    const onCancel = ()    => { cleanup(); dlg.close(); resolve(null); };
+    const onSave   = (_, savedIp) => { cleanup(); dlg.close(); resolve(savedIp); };
+    const onCancel = ()           => { cleanup(); dlg.close(); resolve(null); };
 
     function cleanup() {
       ipcMain.removeListener('ip-dialog-save',   onSave);
@@ -206,13 +208,13 @@ ipcMain.on('set-ignore-mouse-events', (event, ignore) => {
   if (w) w.setIgnoreMouseEvents(ignore, { forward: true });
 });
 
-ipcMain.handle('open-app-manager', (event, appsJson, ip) => {
-  const mainWin = BrowserWindow.fromWebContents(event.sender);
+ipcMain.handle('open-app-manager', (event, appsJson, ip, region) => {
+  const parentWin = BrowserWindow.fromWebContents(event.sender);
   return new Promise(resolve => {
     const dlg = new BrowserWindow({
       width:     420,
       height:    560,
-      parent:    mainWin,
+      parent:    parentWin,
       modal:     true,
       frame:     false,
       resizable: false,
@@ -228,7 +230,7 @@ ipcMain.handle('open-app-manager', (event, appsJson, ip) => {
 
     dlg.loadFile(
       path.join(__dirname, 'app', 'app-manager.html'),
-      { query: { apps: appsJson, ip: ip || '' } }
+      { query: { apps: appsJson, ip: ip || '', region: region || 'US' } }
     );
 
     const onSave   = (_, json) => { cleanup(); resolve(json);  dlg.close(); };
@@ -245,33 +247,60 @@ ipcMain.handle('open-app-manager', (event, appsJson, ip) => {
   });
 });
 
-// GET /api/v2/applications returns socket hang-up on Q70C and likely other
-// newer Samsung TVs. Per-app checks (GET /api/v2/applications/<appId>) are
-// reliable: 200 = installed, 404 = not installed.
-ipcMain.handle('fetch-tv-apps', async (_event, ip, appIds) => {
-  const check = appId => new Promise(resolve => {
-    const req = http.get({
-      hostname: ip,
-      port:     8001,
-      path:     `/api/v2/applications/${encodeURIComponent(appId)}`,
-      timeout:  4000,
-    }, res => {
-      let data = '';
-      res.on('data', chunk => { data += chunk; });
-      res.on('end', () => {
-        if (res.statusCode !== 200) { resolve(null); return; }
-        try {
-          const json = JSON.parse(data);
-          resolve({ appId: json.id || appId, name: json.name || '' });
-        } catch (_) { resolve(null); }
-      });
+// Fetch basic TV device info (countryCode, modelName) from /api/v2/
+ipcMain.handle('get-tv-info', (_event, ip) => new Promise(resolve => {
+  const req = http.get({
+    hostname: ip, port: 8001, path: '/api/v2/', timeout: 4000,
+  }, res => {
+    let data = '';
+    res.on('data', chunk => { data += chunk; });
+    res.on('end', () => {
+      try {
+        const json = JSON.parse(data);
+        resolve({
+          countryCode: json.device?.countryCode || null,
+          modelName:   json.device?.modelName   || null,
+        });
+      } catch (_) { resolve(null); }
     });
+  });
+  req.on('timeout', () => { req.destroy(); resolve(null); });
+  req.on('error',   () => resolve(null));
+}));
+
+// POST-probe each appId to confirm installation.
+// POST 200 = installed (and now launching), 404 = not installed.
+// Probes sequentially — Samsung TVs reject concurrent POST requests.
+// Sends KEY_HOME after probing to return the TV to the home screen.
+ipcMain.handle('probe-tv-apps', async (_event, ip, appIds) => {
+  const probe = appId => new Promise(resolve => {
+    const options = {
+      hostname: ip, port: 8001,
+      path:     `/api/v2/applications/${encodeURIComponent(appId)}`,
+      method:   'POST',
+      headers:  { 'Content-Type': 'application/json', 'Content-Length': 0 },
+      timeout:  4000,
+    };
+    const req = http.request(options, res => resolve(res.statusCode === 200 ? appId : null));
     req.on('timeout', () => { req.destroy(); resolve(null); });
     req.on('error',   () => resolve(null));
+    req.end();
   });
 
-  const results = await Promise.all((appIds || []).map(check));
-  return { apps: results.filter(Boolean) };
+  const delay = ms => new Promise(r => setTimeout(r, ms));
+  const available = [];
+  for (const appId of (appIds || [])) {
+    const result = await probe(appId);
+    if (result) available.push(result);
+    await delay(300);
+  }
+
+  // Navigate TV back to home screen after launching all those apps
+  if (mainWin) {
+    mainWin.webContents.executeJavaScript("sendKey('KEY_HOME')").catch(() => {});
+  }
+
+  return { available };
 });
 
 app.whenReady().then(() => {
@@ -289,7 +318,7 @@ app.whenReady().then(() => {
   const winX = Math.round((sw - 540) / 2);
   const winY = Math.round((sh - WIN_H) / 2);
 
-  const win = new BrowserWindow({
+  mainWin = new BrowserWindow({
     x:           winX,
     y:           winY,
     width:       WIN_W,
@@ -304,23 +333,23 @@ app.whenReady().then(() => {
     },
   });
 
-  win.setIgnoreMouseEvents(true, { forward: true });
+  mainWin.setIgnoreMouseEvents(true, { forward: true });
 
-  win.loadFile(path.join(APP_DIR, 'index.html'));
+  mainWin.loadFile(path.join(APP_DIR, 'index.html'));
   startHttpServer();
-  registerShortcuts(win);
+  registerShortcuts(mainWin);
 
-  win.webContents.on('context-menu', () => {
+  mainWin.webContents.on('context-menu', () => {
     Menu.buildFromTemplate([
       { label: 'Set TV IP…',
-        click: () => win.webContents.executeJavaScript('openSettings()').catch(() => {}) },
+        click: () => mainWin.webContents.executeJavaScript('openSettings()').catch(() => {}) },
       { label: 'Reconnect',
-        click: () => win.webContents.executeJavaScript('connect()').catch(() => {}) },
+        click: () => mainWin.webContents.executeJavaScript('connect()').catch(() => {}) },
       { label: 'Accept TV Certificate',
-        click: () => win.webContents.executeJavaScript('openCertPage()').catch(() => {}) },
+        click: () => mainWin.webContents.executeJavaScript('openCertPage()').catch(() => {}) },
       { type: 'separator' },
       { label: 'Quit', click: () => app.quit() },
-    ]).popup({ window: win });
+    ]).popup({ window: mainWin });
   });
 });
 

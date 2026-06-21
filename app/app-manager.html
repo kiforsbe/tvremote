@@ -21,7 +21,7 @@
       -webkit-app-region: drag;
     }
 
-    button, input, label { -webkit-app-region: no-drag; }
+    button, input, label, select { -webkit-app-region: no-drag; }
 
     h1 { font-size: 14px; font-weight: 600; }
 
@@ -120,8 +120,28 @@
     .app-row.drag-over-top    { box-shadow: 0 -2px 0 0 #60cdff; }
     .app-row.drag-over-bottom { box-shadow: 0  2px 0 0 #60cdff; }
 
-    /* ── Sync with TV ───────────────────────────── */
-    .dialog-header { display: flex; align-items: center; justify-content: space-between; }
+    /* ── Header with region selector ────────────── */
+    .dialog-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .header-controls { display: flex; align-items: center; gap: 6px; }
+
+    .region-select {
+      height: 24px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.09);
+      border-radius: 4px;
+      color: rgba(255,255,255,0.7);
+      font-family: inherit; font-size: 12px;
+      cursor: pointer;
+      padding: 0 6px;
+      outline: none;
+    }
+    .region-select option { background: #1f1f1f; color: rgba(255,255,255,0.9); }
+
     .btn-sync {
       height: 24px; padding: 0 10px;
       background: rgba(255,255,255,0.06);
@@ -133,17 +153,27 @@
     }
     .btn-sync:hover:not(:disabled) { background: rgba(255,255,255,0.1); }
     .btn-sync:disabled { opacity: 0.4; cursor: default; }
+
+    /* ── Sync state indicators ──────────────────── */
     .app-row.unavailable { opacity: 0.4; }
     .app-row.unavailable .app-row-name::after {
       content: ' — not on TV';
       font-size: 10px;
+    }
+    .app-row.confirmed .app-row-name::after {
+      content: ' ✓';
+      font-size: 10px;
+      color: #60cdff;
     }
   </style>
 </head>
 <body>
   <div class="dialog-header">
     <h1>Manage Apps</h1>
-    <button class="btn-sync" id="btn-sync">Sync with TV</button>
+    <div class="header-controls">
+      <select id="region-select" class="region-select"></select>
+      <button class="btn-sync" id="btn-sync">Sync with TV</button>
+    </div>
   </div>
 
   <div class="app-list" id="app-list"></div>
@@ -164,38 +194,69 @@
     <button class="btn-action btn-save"   id="btn-save">Save</button>
   </div>
 
+  <script src="catalog.js"></script>
   <script>
-    const CATALOG = [
-      { id: 'youtube',     name: 'YouTube',     icon: '▶',  appId: '111299001912', deepLink: true  },
-      { id: 'netflix',     name: 'Netflix',     icon: 'N',  appId: '11101200001',  deepLink: false },
-      { id: 'prime',       name: 'Prime',       icon: '📦', appId: '3201910019365',deepLink: false },
-      { id: 'disney',      name: 'Disney+',     icon: '🏰', appId: '3201901017640',deepLink: false },
-      { id: 'spotify',     name: 'Spotify',     icon: '🎵', appId: '3201606009684',deepLink: false },
-      { id: 'max',         name: 'Max',         icon: 'M',  appId: '3201601007230',deepLink: false },
-      { id: 'appletv',     name: 'Apple TV+',   icon: '',  appId: '3201807016597',deepLink: false },
-      { id: 'applemusic',  name: 'Apple Music', icon: '🎶', appId: '3201908019066',deepLink: false },
-      { id: 'hulu',        name: 'Hulu',        icon: '🟢', appId: '3201601007625',deepLink: false },
-      { id: 'paramount',   name: 'Paramount+',  icon: '⛰', appId: '3201711015986',deepLink: false },
-      { id: 'peacock',     name: 'Peacock',     icon: '🦚', appId: '3202005022341',deepLink: false },
-      { id: 'tubi',        name: 'Tubi',        icon: '📺', appId: '3201504901843',deepLink: false },
-      { id: 'pluto',       name: 'Pluto TV',    icon: '🪐', appId: '3202008022518',deepLink: false },
-      { id: 'crunchyroll', name: 'Crunchyroll', icon: '🍥', appId: '3201611010411',deepLink: false },
-    ];
+    const params        = new URLSearchParams(location.search);
+    let enabledApps     = JSON.parse(params.get('apps') || '[]');
+    const ip            = params.get('ip')     || '';
+    let selectedRegion  = params.get('region') || 'US';
+    let tvAvailable     = null; // null = not synced; Set<appId> after sync
 
-    // enabledApps: ordered array of currently enabled apps (passed from remote)
-    let enabledApps = JSON.parse(new URLSearchParams(location.search).get('apps') || '[]');
-    const ip = new URLSearchParams(location.search).get('ip') || '';
-    let tvAppIds = null; // null = not synced; Set<string> after sync
+    // ── Region selector ──────────────────────────────────────────────────────
+    const regionSel = document.getElementById('region-select');
+    REGIONS.forEach(r => {
+      const opt = document.createElement('option');
+      opt.value = r.id;
+      opt.textContent = r.label;
+      regionSel.appendChild(opt);
+    });
+    regionSel.value = selectedRegion;
 
-    // Merge: build a master list = enabled apps (in order) + disabled catalog apps + custom disabled
+    regionSel.onchange = () => applyRegion(regionSel.value);
+
+    function applyRegion(newRegion) {
+      selectedRegion = newRegion;
+      const newCat   = getCatalogForRegion(newRegion);
+      const catMap   = new Map(newCat.map(a => [a.id, a]));
+
+      // Keep custom apps; update catalog apps' appIds; drop those now unavailable
+      enabledApps = enabledApps
+        .map(app => app.custom ? app : (catMap.get(app.id) ? { ...catMap.get(app.id) } : null))
+        .filter(Boolean);
+
+      tvAvailable = null; // sync results no longer valid for new region
+      render();
+    }
+
+    // ── Catalog helpers ──────────────────────────────────────────────────────
+    function getCatalogForRegion(region) {
+      return APP_CATALOG
+        .filter(a => a.available.length === 0 || a.available.includes(region))
+        .map(a => ({
+          id:       a.id,
+          name:     a.name,
+          icon:     a.icon,
+          appId:    a.appIds[region] || a.appIds.default,
+          deepLink: a.deepLink || false,
+        }));
+    }
+
+    // Seed enabledApps from region defaults when nothing saved yet
+    if (enabledApps.length === 0) {
+      const cat      = getCatalogForRegion(selectedRegion);
+      const catMap   = new Map(cat.map(a => [a.id, a]));
+      const defaults = REGION_DEFAULTS[selectedRegion] || [];
+      enabledApps    = defaults.map(id => catMap.get(id)).filter(Boolean);
+    }
+
+    // ── Render ───────────────────────────────────────────────────────────────
     function buildRows() {
+      const cat        = getCatalogForRegion(selectedRegion);
       const enabledIds = new Set(enabledApps.map(a => a.id));
-      const catalogIds = new Set(CATALOG.map(a => a.id));
-      const disabledCatalog = CATALOG.filter(a => !enabledIds.has(a.id));
-      // disabled custom apps are not shown (they were removed)
+      const disabled   = cat.filter(a => !enabledIds.has(a.id));
       return [
         ...enabledApps.map(a => ({ ...a, enabled: true })),
-        ...disabledCatalog.map(a => ({ ...a, enabled: false })),
+        ...disabled.map(a => ({ ...a, enabled: false })),
       ];
     }
 
@@ -204,11 +265,16 @@
       list.innerHTML = '';
       const rows = buildRows();
 
-      rows.forEach((app, i) => {
+      rows.forEach(app => {
         const rowEl = document.createElement('div');
         rowEl.className = 'app-row';
-        if (tvAppIds !== null && !app.custom && !tvAppIds.has(app.appId)) {
-          rowEl.classList.add('unavailable');
+
+        if (tvAvailable !== null && !app.custom) {
+          if (app.appId && tvAvailable.has(app.appId)) {
+            rowEl.classList.add('confirmed');
+          } else {
+            rowEl.classList.add('unavailable');
+          }
         }
 
         if (app.enabled) {
@@ -245,27 +311,52 @@
 
     render();
 
-    // Sync with TV
+    // ── Sync with TV ─────────────────────────────────────────────────────────
     (function () {
       const btn = document.getElementById('btn-sync');
       if (!ip) { btn.disabled = true; btn.title = 'No TV IP configured'; return; }
+
       btn.onclick = async () => {
         btn.disabled = true;
         btn.textContent = 'Syncing…';
-        const catalogIds = CATALOG.map(a => a.appId);
-        const result = await window.appManagerAPI.fetchTvApps(ip, catalogIds).catch(e => ({ error: e.message }));
+
+        // Auto-detect region from TV's country code
+        try {
+          const info = await window.appManagerAPI.getTvInfo(ip);
+          if (info && info.countryCode) {
+            const detected = CC_TO_REGION[info.countryCode];
+            if (detected && detected !== selectedRegion) {
+              selectedRegion = detected;
+              regionSel.value = detected;
+              applyRegion(detected);
+            }
+          }
+        } catch (_) {}
+
+        // POST-probe each catalog app for the selected region
+        const cat    = getCatalogForRegion(selectedRegion);
+        const appIds = cat.map(a => a.appId).filter(Boolean);
+
+        let result;
+        try {
+          result = await window.appManagerAPI.probeTvApps(ip, appIds);
+        } catch (e) {
+          result = { error: e.message };
+        }
+
         if (result.error) {
           btn.textContent = 'Failed';
         } else {
-          tvAppIds = new Set(result.apps.map(a => a.appId));
-          btn.textContent = `Synced · ${result.apps.length} apps`;
+          tvAvailable = new Set(result.available);
+          btn.textContent = `Synced · ${result.available.length} apps`;
           render();
         }
-        setTimeout(() => { btn.textContent = 'Sync with TV'; btn.disabled = !ip; }, 2500);
+
+        setTimeout(() => { btn.textContent = 'Sync with TV'; btn.disabled = !ip; }, 3000);
       };
     })();
 
-    // Drag-and-drop (delegated to #app-list — survives re-renders)
+    // ── Drag-and-drop ────────────────────────────────────────────────────────
     (function () {
       const list = document.getElementById('app-list');
       let _ddIdx = null;
@@ -297,7 +388,6 @@
         const targetIdx = enabledApps.findIndex(a => a.id === targetId);
         const rect      = row.getBoundingClientRect();
         const toIdx     = e.clientY < rect.top + rect.height / 2 ? targetIdx : targetIdx + 1;
-        // inline moveApp logic (no shared module in dialog)
         if (_ddIdx !== toIdx && _ddIdx + 1 !== toIdx) {
           const next = enabledApps.slice();
           const [item] = next.splice(_ddIdx, 1);
@@ -315,6 +405,7 @@
       });
     })();
 
+    // ── Add custom app ───────────────────────────────────────────────────────
     document.getElementById('btn-add').onclick = () => {
       const name  = document.getElementById('custom-name').value.trim();
       const appId = document.getElementById('custom-appid').value.trim();
@@ -326,7 +417,9 @@
       render();
     };
 
-    document.getElementById('btn-save').onclick   = () => window.appManagerAPI.save(JSON.stringify(enabledApps));
+    // ── Save / Cancel ────────────────────────────────────────────────────────
+    document.getElementById('btn-save').onclick = () =>
+      window.appManagerAPI.save(JSON.stringify({ apps: enabledApps, region: selectedRegion }));
     document.getElementById('btn-cancel').onclick = () => window.appManagerAPI.cancel();
 
     document.addEventListener('keydown', e => {

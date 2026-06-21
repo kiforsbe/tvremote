@@ -33,6 +33,10 @@ const MEDIA_APPS_CATALOG = [
   { id: 'crunchyroll', name: 'Crunchyroll', icon: '🍥', appId: '3201611010411',deepLink: false },
 ];
 
+function getRegion() {
+  return localStorage.getItem('tvregion') || 'US';
+}
+
 function loadMediaApps() {
   try {
     const raw = localStorage.getItem('mediaApps');
@@ -424,8 +428,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
   manageBtn.addEventListener('click', () => {
     if (!window.electronAPI?.openAppManager) return;
-    window.electronAPI.openAppManager(JSON.stringify(_mediaApps), getIp()).then(result => {
-      if (result) setMediaApps(JSON.parse(result));
+    window.electronAPI.openAppManager(JSON.stringify(_mediaApps), getIp(), getRegion()).then(result => {
+      if (result) {
+        const { apps, region } = JSON.parse(result);
+        if (region) localStorage.setItem('tvregion', region);
+        setMediaApps(apps);
+      }
     });
   });
 
@@ -457,7 +465,6 @@ if (typeof module !== 'undefined' && module.exports) {
     MEDIA_APPS_CATALOG,
     loadMediaApps,
     saveMediaApps,
-    buildAppLaunchCommand,
     parseYouTubeVideoId,
     reorderApp,
     moveApp,

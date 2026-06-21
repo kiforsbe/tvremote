@@ -31,6 +31,7 @@
       display: flex;
       flex-direction: column;
       gap: 2px;
+      -webkit-app-region: no-drag;
     }
 
     .app-row {
@@ -45,20 +46,6 @@
     .app-row input[type=checkbox] { width: 14px; height: 14px; accent-color: #0067c0; cursor: pointer; flex-shrink: 0; }
 
     .app-row-name { flex: 1; font-size: 13px; cursor: pointer; }
-
-    .order-btn {
-      width: 22px; height: 22px;
-      background: rgba(255,255,255,0.06);
-      border: 1px solid rgba(255,255,255,0.09);
-      border-radius: 3px;
-      color: rgba(255,255,255,0.7);
-      font-size: 11px;
-      cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-      flex-shrink: 0;
-    }
-    .order-btn:hover:not(:disabled) { background: rgba(255,255,255,0.12); }
-    .order-btn:disabled { opacity: 0.2; cursor: default; }
 
     .divider { height: 1px; background: rgba(255,255,255,0.08); flex-shrink: 0; }
 
@@ -194,9 +181,6 @@
       const rows = buildRows();
 
       rows.forEach((app, i) => {
-        const enabledList = rows.filter(r => r.enabled);
-        const enabledIdx  = enabledList.findIndex(r => r.id === app.id);
-
         const rowEl = document.createElement('div');
         rowEl.className = 'app-row';
 
@@ -226,32 +210,8 @@
         nameEl.textContent = app.icon + ' ' + app.name;
         nameEl.onclick     = () => { cb.checked = !cb.checked; cb.onchange(); };
 
-        const upBtn = document.createElement('button');
-        upBtn.className   = 'order-btn';
-        upBtn.textContent = '↑';
-        upBtn.disabled    = !app.enabled || enabledIdx === 0;
-        upBtn.onclick     = () => {
-          const idx = enabledApps.findIndex(a => a.id === app.id);
-          if (idx <= 0) return;
-          [enabledApps[idx], enabledApps[idx - 1]] = [enabledApps[idx - 1], enabledApps[idx]];
-          render();
-        };
-
-        const downBtn = document.createElement('button');
-        downBtn.className   = 'order-btn';
-        downBtn.textContent = '↓';
-        downBtn.disabled    = !app.enabled || enabledIdx === enabledList.length - 1;
-        downBtn.onclick     = () => {
-          const idx = enabledApps.findIndex(a => a.id === app.id);
-          if (idx < 0 || idx >= enabledApps.length - 1) return;
-          [enabledApps[idx], enabledApps[idx + 1]] = [enabledApps[idx + 1], enabledApps[idx]];
-          render();
-        };
-
         rowEl.appendChild(cb);
         rowEl.appendChild(nameEl);
-        rowEl.appendChild(upBtn);
-        rowEl.appendChild(downBtn);
         list.appendChild(rowEl);
       });
     }

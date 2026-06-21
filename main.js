@@ -184,6 +184,23 @@ ipcMain.handle('set-numpad', (event, open) => {
 
 ipcMain.handle('discover-tvs', discoverTvs);
 
+ipcMain.handle('launch-app', (_event, ip, appId, metaTag) => {
+  return new Promise(resolve => {
+    const body = metaTag ? JSON.stringify({ id: metaTag }) : '';
+    const options = {
+      hostname: ip,
+      port:     8001,
+      path:     `/api/v2/applications/${encodeURIComponent(appId)}`,
+      method:   'POST',
+      headers:  { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(body) },
+    };
+    const req = http.request(options, res => resolve({ status: res.statusCode }));
+    req.on('error', err => resolve({ error: err.message }));
+    if (body) req.write(body);
+    req.end();
+  });
+});
+
 ipcMain.on('set-ignore-mouse-events', (event, ignore) => {
   const w = BrowserWindow.fromWebContents(event.sender);
   if (w) w.setIgnoreMouseEvents(ignore, { forward: true });

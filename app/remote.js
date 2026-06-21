@@ -45,11 +45,6 @@ function saveMediaApps(apps) {
   localStorage.setItem('mediaApps', JSON.stringify(apps));
 }
 
-function buildAppLaunchCommand(appId, metaTag) {
-  const params = { id: appId };
-  if (metaTag != null) params.metaTag = metaTag;
-  return JSON.stringify({ method: 'ms.application.start', params });
-}
 
 function parseYouTubeVideoId(input) {
   if (!input) return null;
@@ -157,8 +152,9 @@ function sendKey(key) {
 }
 
 function launchApp(appId, metaTag) {
-  if (!ws || ws.readyState !== WebSocket.OPEN) return;
-  ws.send(buildAppLaunchCommand(appId, metaTag != null ? metaTag : null));
+  const ip = getIp();
+  if (!ip) return;
+  window.electronAPI?.launchApp(ip, appId, metaTag ?? null);
 }
 
 let _mediaApps = [];

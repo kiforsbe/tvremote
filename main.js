@@ -69,7 +69,7 @@ const SSDP_MSG = Buffer.from([
   `HOST: ${SSDP_ADDR}:${SSDP_PORT}`,
   'MAN: "ssdp:discover"',
   'MX: 3',
-  'ST: urn:samsung.com:device:RemoteControlReceiver:1',
+  'ST: ssdp:all',
   '', '',
 ].join('\r\n'));
 
@@ -112,11 +112,13 @@ function discoverTvs() {
     });
 
     sock.on('message', (msg, rinfo) => {
+      const text = msg.toString();
+      if (!/SERVER:[^\r\n]*Samsung/i.test(text)) return;
       const ip = rinfo.address;
       if (found.has(ip)) return;
       found.set(ip, { name: ip, ip });
 
-      const locMatch = msg.toString().match(/^LOCATION:\s*(.+)$/im);
+      const locMatch = text.match(/^LOCATION:\s*(.+)$/im);
       if (locMatch) {
         const p = fetchDeviceName(locMatch[1].trim())
           .then(name => { if (name) found.set(ip, { name, ip }); })

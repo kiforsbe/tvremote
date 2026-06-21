@@ -302,8 +302,8 @@
           <path d="M1 5h8" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
         </svg>
       </button>
-      <button class="caption-btn" disabled title="Maximize">
-        <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+      <button class="caption-btn" id="btn-maximize" title="Maximize">
+        <svg id="icon-maximize" width="10" height="10" viewBox="0 0 10 10" fill="none">
           <rect x="1" y="1" width="8" height="8" rx="1" stroke="currentColor" stroke-width="1.2"/>
         </svg>
       </button>
@@ -373,8 +373,18 @@
     const appIdOverrides = new Map();
 
     // ── Caption buttons ──────────────────────────────────────────────────────
+    const ICON_MAXIMIZE = `<rect x="1" y="1" width="8" height="8" rx="1" stroke="currentColor" stroke-width="1.2"/>`;
+    const ICON_RESTORE  = `<rect x="2.5" y="0.5" width="7" height="7" rx="1" stroke="currentColor" stroke-width="1.2"/>
+                            <rect x="0.5" y="2.5" width="7" height="7" rx="1" stroke="currentColor" stroke-width="1.2"/>`;
+
     document.getElementById('btn-minimize').onclick = () => window.appManagerAPI.minimize();
+    document.getElementById('btn-maximize').onclick = () => window.appManagerAPI.maximize();
     document.getElementById('btn-close').onclick    = () => window.appManagerAPI.cancel();
+
+    window.appManagerAPI.onWindowState(isMaximized => {
+      document.getElementById('icon-maximize').innerHTML = isMaximized ? ICON_RESTORE : ICON_MAXIMIZE;
+      document.getElementById('btn-maximize').title = isMaximized ? 'Restore Down' : 'Maximize';
+    });
 
     // ── Region selector ──────────────────────────────────────────────────────
     const regionSel = document.getElementById('region-select');

@@ -212,16 +212,24 @@ ipcMain.on('window-minimize', event => {
   BrowserWindow.fromWebContents(event.sender)?.minimize();
 });
 
+ipcMain.on('window-maximize', event => {
+  const w = BrowserWindow.fromWebContents(event.sender);
+  if (!w) return;
+  w.isMaximized() ? w.unmaximize() : w.maximize();
+});
+
 ipcMain.handle('open-app-manager', (event, appsJson, ip, region) => {
   const parentWin = BrowserWindow.fromWebContents(event.sender);
   return new Promise(resolve => {
     const dlg = new BrowserWindow({
       width:     420,
       height:    596,
+      minWidth:  320,
+      minHeight: 420,
       parent:    parentWin,
       modal:     true,
       frame:     false,
-      resizable: false,
+      resizable: true,
       backgroundColor: '#1f1f1f',
       webPreferences: {
         nodeIntegration:  false,
@@ -231,6 +239,9 @@ ipcMain.handle('open-app-manager', (event, appsJson, ip, region) => {
     });
 
     try { dlg.setBackgroundMaterial('mica'); } catch (_) {}
+
+    dlg.on('maximize',   () => dlg.webContents.send('window-state-changed', true));
+    dlg.on('unmaximize', () => dlg.webContents.send('window-state-changed', false));
 
     dlg.loadFile(
       path.join(__dirname, 'app', 'app-manager.html'),

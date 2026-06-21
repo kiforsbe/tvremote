@@ -398,9 +398,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
   let _ignoreMouse = true;
   let _closeTimer = null;
+  const _containerEl = document.getElementById('remote-container');
   document.addEventListener('mousemove', e => {
-    const el = document.elementFromPoint(e.clientX, e.clientY);
-    const shouldIgnore = !el || el === document.body || el.tagName === 'HTML';
+    // elementFromPoint returns body/html for -webkit-app-region:drag elements,
+    // so check container bounds directly to catch the remote background.
+    const rect = _containerEl.getBoundingClientRect();
+    const inContainer = e.clientX >= rect.left && e.clientX <= rect.right &&
+                        e.clientY >= rect.top  && e.clientY <= rect.bottom;
+    let shouldIgnore;
+    if (inContainer) {
+      shouldIgnore = false;
+    } else {
+      const el = document.elementFromPoint(e.clientX, e.clientY);
+      shouldIgnore = !el || el === document.body || el.tagName === 'HTML';
+    }
     if (shouldIgnore !== _ignoreMouse) {
       _ignoreMouse = shouldIgnore;
       window.electronAPI?.setIgnoreMouseEvents(shouldIgnore);

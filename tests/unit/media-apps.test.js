@@ -7,6 +7,7 @@ const {
   buildAppLaunchCommand,
   parseYouTubeVideoId,
   reorderApp,
+  moveApp,
 } = require('../../app/remote.js');
 
 describe('MEDIA_APPS_CATALOG', () => {
@@ -151,5 +152,40 @@ describe('reorderApp', () => {
 
   test('returns copy unchanged for unknown id', () => {
     expect(reorderApp(apps, 'z', 'up').map(a => a.id)).toEqual(['a', 'b', 'c']);
+  });
+});
+
+describe('moveApp', () => {
+  const apps = (ids) => ids.map(id => ({ id, name: id, icon: '', appId: 'x', deepLink: false }));
+
+  test('moves item from index 0 to index 2 (inserts before index 2)', () => {
+    expect(moveApp(apps(['a','b','c']), 0, 2).map(a => a.id)).toEqual(['b','a','c']);
+  });
+
+  test('moves item from index 2 to index 1 (inserts before index 1)', () => {
+    expect(moveApp(apps(['a','b','c']), 2, 1).map(a => a.id)).toEqual(['a','c','b']);
+  });
+
+  test('moves item to beginning (toIdx 0)', () => {
+    expect(moveApp(apps(['a','b','c']), 2, 0).map(a => a.id)).toEqual(['c','a','b']);
+  });
+
+  test('moves item to end (toIdx length)', () => {
+    expect(moveApp(apps(['a','b','c']), 0, 3).map(a => a.id)).toEqual(['b','c','a']);
+  });
+
+  test('no-op when fromIdx === toIdx', () => {
+    expect(moveApp(apps(['a','b','c']), 1, 1).map(a => a.id)).toEqual(['a','b','c']);
+  });
+
+  test('no-op when fromIdx + 1 === toIdx (inserting after itself)', () => {
+    expect(moveApp(apps(['a','b','c']), 1, 2).map(a => a.id)).toEqual(['a','b','c']);
+  });
+
+  test('does not mutate original array', () => {
+    const original = apps(['a','b','c']);
+    const result = moveApp(original, 0, 2);
+    expect(result).not.toBe(original);
+    expect(original.map(a => a.id)).toEqual(['a','b','c']);
   });
 });

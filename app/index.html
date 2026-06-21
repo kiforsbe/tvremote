@@ -478,24 +478,23 @@
     .app-icon { font-size: 14px; flex-shrink: 0; width: 18px; text-align: center; }
     .app-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 11px; }
 
-    .drawer-order-btn {
-      width: 18px;
-      height: 22px;
-      background: transparent;
-      border: none;
+    /* ── Drawer drag-and-drop ────────────────────── */
+    .drawer-grab-handle {
+      font-size: 12px;
       color: var(--text-dim);
-      font-size: 10px;
-      cursor: pointer;
-      border-radius: 4px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 0;
+      cursor: grab;
       flex-shrink: 0;
-      transition: color 0.1s, background 0.1s;
+      width: 14px;
+      text-align: center;
+      user-select: none;
+      -webkit-app-region: no-drag;
     }
-    .drawer-order-btn:hover:not(:disabled)  { color: var(--text); background: var(--btn-hover); }
-    .drawer-order-btn:disabled { opacity: 0.2; cursor: default; }
+    .drawer-grab-handle:active { cursor: grabbing; }
+
+    .drawer-app-row { position: relative; }
+    .drawer-app-row.dragging { opacity: 0.4; }
+    .drawer-app-row.drag-over-top    { box-shadow: 0 -2px 0 0 #60cdff; }
+    .drawer-app-row.drag-over-bottom { box-shadow: 0  2px 0 0 #60cdff; }
 
     .drawer-manage-btn {
       width: 100%;

@@ -83,6 +83,14 @@ function reorderApp(apps, id, dir) {
   return next;
 }
 
+function moveApp(apps, fromIdx, toIdx) {
+  if (fromIdx === toIdx || fromIdx + 1 === toIdx) return apps.slice();
+  const next = apps.slice();
+  const [item] = next.splice(fromIdx, 1);
+  next.splice(fromIdx < toIdx ? toIdx - 1 : toIdx, 0, item);
+  return next;
+}
+
 function buildKeyCommand(key) {
   return JSON.stringify({
     method: 'ms.remote.control',
@@ -194,12 +202,12 @@ function renderDrawer() {
     const app = _mediaApps[i];
     const row = document.createElement('div');
     row.className = 'drawer-app-row';
+    row.draggable = true;
+    row.dataset.idx = i;
 
-    const upBtn = document.createElement('button');
-    upBtn.className = 'drawer-order-btn';
-    upBtn.textContent = '↑';
-    upBtn.disabled = (i === 0);
-    upBtn.onclick = () => setMediaApps(reorderApp(_mediaApps, app.id, 'up'));
+    const handle = document.createElement('span');
+    handle.className = 'drawer-grab-handle';
+    handle.textContent = '⠿';
 
     const appBtn = document.createElement('button');
     appBtn.className = 'drawer-app-btn';
@@ -217,17 +225,55 @@ function renderDrawer() {
       else { launchApp(app.appId); }
     };
 
-    const downBtn = document.createElement('button');
-    downBtn.className = 'drawer-order-btn';
-    downBtn.textContent = '↓';
-    downBtn.disabled = (i === _mediaApps.length - 1);
-    downBtn.onclick = () => setMediaApps(reorderApp(_mediaApps, app.id, 'down'));
-
-    row.appendChild(upBtn);
+    row.appendChild(handle);
     row.appendChild(appBtn);
-    row.appendChild(downBtn);
     container.appendChild(row);
   }
+}
+
+function setupDrawerDragDrop() {
+  const container = document.getElementById('drawer-apps');
+  if (!container) return;
+  let _dragIdx = null;
+
+  container.addEventListener('dragstart', e => {
+    const row = e.target.closest('.drawer-app-row');
+    if (!row) return;
+    _dragIdx = Number(row.dataset.idx);
+    row.classList.add('dragging');
+    e.dataTransfer.effectAllowed = 'move';
+  });
+
+  container.addEventListener('dragover', e => {
+    e.preventDefault();
+    const row = e.target.closest('.drawer-app-row');
+    container.querySelectorAll('.drag-over-top, .drag-over-bottom').forEach(el => {
+      el.classList.remove('drag-over-top', 'drag-over-bottom');
+    });
+    if (!row || _dragIdx === null) return;
+    const rect = row.getBoundingClientRect();
+    const cls = e.clientY < rect.top + rect.height / 2 ? 'drag-over-top' : 'drag-over-bottom';
+    row.classList.add(cls);
+  });
+
+  container.addEventListener('drop', e => {
+    e.preventDefault();
+    const row = e.target.closest('.drawer-app-row');
+    if (!row || _dragIdx === null) return;
+    const targetIdx = Number(row.dataset.idx);
+    const rect = row.getBoundingClientRect();
+    const toIdx = e.clientY < rect.top + rect.height / 2 ? targetIdx : targetIdx + 1;
+    const newApps = moveApp(_mediaApps, _dragIdx, toIdx);
+    _dragIdx = null;
+    setMediaApps(newApps);
+  });
+
+  container.addEventListener('dragend', () => {
+    _dragIdx = null;
+    container.querySelectorAll('.dragging, .drag-over-top, .drag-over-bottom').forEach(el => {
+      el.classList.remove('dragging', 'drag-over-top', 'drag-over-bottom');
+    });
+  });
 }
 
 function openDrawer() {
@@ -351,6 +397,7 @@ document.addEventListener('DOMContentLoaded', () => {
   _mediaApps = loadMediaApps();
   renderPinnedApps();
   renderDrawer();
+  setupDrawerDragDrop();
 
   const drawerTab       = document.getElementById('drawer-tab');
   const manageBtn       = document.getElementById('drawer-manage-btn');
@@ -416,5 +463,6 @@ if (typeof module !== 'undefined' && module.exports) {
     buildAppLaunchCommand,
     parseYouTubeVideoId,
     reorderApp,
+    moveApp,
   };
 }

@@ -252,7 +252,8 @@
       btn.onclick = async () => {
         btn.disabled = true;
         btn.textContent = 'Syncing…';
-        const result = await window.appManagerAPI.fetchTvApps(ip).catch(e => ({ error: e.message }));
+        const catalogIds = CATALOG.map(a => a.appId);
+        const result = await window.appManagerAPI.fetchTvApps(ip, catalogIds).catch(e => ({ error: e.message }));
         if (result.error) {
           btn.textContent = 'Failed';
         } else {

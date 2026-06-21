@@ -245,34 +245,33 @@ ipcMain.handle('open-app-manager', (event, appsJson, ip) => {
   });
 });
 
-ipcMain.handle('fetch-tv-apps', (_event, ip) => {
-  return new Promise(resolve => {
+// GET /api/v2/applications returns socket hang-up on Q70C and likely other
+// newer Samsung TVs. Per-app checks (GET /api/v2/applications/<appId>) are
+// reliable: 200 = installed, 404 = not installed.
+ipcMain.handle('fetch-tv-apps', async (_event, ip, appIds) => {
+  const check = appId => new Promise(resolve => {
     const req = http.get({
       hostname: ip,
       port:     8001,
-      path:     '/api/v2/applications',
-      timeout:  5000,
+      path:     `/api/v2/applications/${encodeURIComponent(appId)}`,
+      timeout:  4000,
     }, res => {
       let data = '';
       res.on('data', chunk => { data += chunk; });
       res.on('end', () => {
+        if (res.statusCode !== 200) { resolve(null); return; }
         try {
           const json = JSON.parse(data);
-          const list = Array.isArray(json) ? json
-                     : Array.isArray(json.data) ? json.data
-                     : [];
-          const apps = list
-            .map(a => ({ appId: a.appId || a.AppID || a.id || '', name: a.name || a.Name || '' }))
-            .filter(a => a.appId);
-          resolve({ apps });
-        } catch (e) {
-          resolve({ error: 'Parse error: ' + e.message });
-        }
+          resolve({ appId: json.id || appId, name: json.name || '' });
+        } catch (_) { resolve(null); }
       });
     });
-    req.on('timeout', () => { req.destroy(); resolve({ error: 'Timeout' }); });
-    req.on('error',   err => resolve({ error: err.message }));
+    req.on('timeout', () => { req.destroy(); resolve(null); });
+    req.on('error',   () => resolve(null));
   });
+
+  const results = await Promise.all((appIds || []).map(check));
+  return { apps: results.filter(Boolean) };
 });
 
 app.whenReady().then(() => {

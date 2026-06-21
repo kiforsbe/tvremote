@@ -7,4 +7,5 @@ contextBridge.exposeInMainWorld('appManagerAPI', {
   onWindowState: (cb)        => ipcRenderer.on('window-state-changed', (_e, v) => cb(v)),
   getTvInfo:   (ip)           => ipcRenderer.invoke('get-tv-info',    ip),
   probeTvApps: (ip, appIds)   => ipcRenderer.invoke('probe-tv-apps',  ip, appIds),
+  getSamsungDb: ()             => ipcRenderer.invoke('get-samsung-db'),
 });

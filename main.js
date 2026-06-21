@@ -407,6 +407,14 @@ ipcMain.handle('probe-tv-apps', async (_event, ip, appIds) => {
   return { available };
 });
 
+ipcMain.handle('get-samsung-db', () => {
+  try {
+    const raw = require('fs').readFileSync(
+      require('path').join(__dirname, 'samsung-apps-db.json'), 'utf8');
+    return JSON.parse(raw).apps || [];
+  } catch (_) { return []; }
+});
+
 app.whenReady().then(() => {
   // cert_verify_proc_builtin rejects Samsung TV's self-signed cert before
   // certificate-error can intercept it — bypass at the session level instead

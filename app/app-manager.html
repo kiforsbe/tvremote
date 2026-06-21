@@ -231,6 +231,64 @@
     .ctx-item.danger { color: rgba(255,100,100,0.9); }
     .ctx-item.danger:hover { background: rgba(255,80,80,0.12); }
 
+    /* ── Samsung DB search (inside Add dialog) ─── */
+    .dialog-search { display: flex; flex-direction: column; gap: 4px; }
+    #dialog-db-search {
+      height: 30px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.09);
+      border-bottom-color: rgba(255,255,255,0.45);
+      border-radius: 4px;
+      color: rgba(255,255,255,0.95);
+      font-family: inherit; font-size: 13px;
+      padding: 0 10px;
+      outline: none;
+      width: 100%;
+    }
+    #dialog-db-search:focus { border-bottom-color: #60cdff; }
+    #dialog-db-results {
+      max-height: 270px; /* ~10 rows */
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+    }
+    #dialog-db-results:empty { display: none; }
+    #dialog-db-results::-webkit-scrollbar       { width: 4px; }
+    #dialog-db-results::-webkit-scrollbar-track { background: transparent; }
+    #dialog-db-results::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 2px; }
+    .db-result {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 27px;
+      padding: 0 8px;
+      border-radius: 3px;
+      cursor: pointer;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+    .db-result:hover { background: rgba(255,255,255,0.07); }
+    .db-result-name { font-size: 12px; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .db-result-id   { font-size: 11px; color: rgba(255,255,255,0.35); font-family: 'Cascadia Code', 'Consolas', monospace; flex-shrink: 0; }
+    .db-search-sep {
+      font-size: 11px;
+      color: rgba(255,255,255,0.3);
+      text-align: center;
+      padding: 4px 0 2px;
+    }
+
+    /* ── Reset button ───────────────────────────── */
+    .btn-reset {
+      height: 24px; padding: 0 10px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.09);
+      border-radius: 4px;
+      color: rgba(255,255,255,0.7);
+      font-family: inherit; font-size: 12px;
+      cursor: pointer; flex-shrink: 0;
+    }
+    .btn-reset:hover { background: rgba(255,255,255,0.1); }
+
     /* ── App dialog (add / edit / set ID) ──────── */
     #app-dialog-overlay {
       position: fixed; inset: 0;
@@ -248,7 +306,7 @@
       border: 1px solid rgba(255,255,255,0.12);
       border-radius: 8px;
       padding: 18px 20px 16px;
-      width: 300px;
+      width: 360px;
       box-shadow: 0 8px 32px rgba(0,0,0,0.6);
       display: flex;
       flex-direction: column;
@@ -307,6 +365,7 @@
   <div class="content">
     <div class="header-controls">
       <select id="region-select" class="region-select"></select>
+      <button class="btn-reset" id="btn-reset">Reset to defaults</button>
       <button class="btn-sync" id="btn-sync">Sync with TV</button>
     </div>
 
@@ -332,6 +391,11 @@
   <div id="app-dialog-overlay">
     <div id="app-dialog">
       <h2 id="dialog-title">Add App</h2>
+      <div class="dialog-search" id="dialog-search-section">
+        <input type="search" id="dialog-db-search" placeholder="Search Samsung apps…" autocomplete="off">
+        <div id="dialog-db-results"></div>
+        <div class="db-search-sep" id="dialog-search-sep">— or enter manually —</div>
+      </div>
       <div class="dialog-field">
         <label>App name</label>
         <input type="text" id="dialog-name-input" placeholder="e.g. My Channel" autocomplete="off">
@@ -398,6 +462,9 @@
 
       tvAvailable = null;
       render();
+      if (!document.getElementById('app-dialog-overlay').classList.contains('visible')) return;
+      document.getElementById('dialog-db-search').value = '';
+      updateDbSearch();
     }
 
     function effectiveAppId(app) {
@@ -490,6 +557,71 @@
 
     render();
 
+    // ── Reset to defaults ────────────────────────────────────────────────────
+    document.getElementById('btn-reset').onclick = () => {
+      const cat      = getCatalogForRegion(selectedRegion);
+      const catMap   = new Map(cat.map(a => [a.id, a]));
+      const defaults = REGION_DEFAULTS[selectedRegion] || [];
+      enabledApps    = defaults.map(id => catMap.get(id)).filter(Boolean);
+      tvAvailable    = null;
+      render();
+    };
+
+    // ── Samsung DB search ────────────────────────────────────────────────────
+    let _samsungDb = null;
+
+    async function ensureSamsungDb() {
+      if (!_samsungDb) _samsungDb = await window.appManagerAPI.getSamsungDb();
+    }
+
+    function ccForRegion(region) {
+      return Object.entries(CC_TO_REGION)
+        .filter(([, rid]) => rid === region)
+        .map(([cc]) => cc);
+    }
+
+    function updateDbSearch() {
+      const query   = document.getElementById('dialog-db-search').value.trim().toLowerCase();
+      const results = document.getElementById('dialog-db-results');
+      const sep     = document.getElementById('dialog-search-sep');
+      results.innerHTML = '';
+
+      if (!_samsungDb) { sep.hidden = true; return; }
+
+      const regionCCs = new Set(ccForRegion(selectedRegion));
+      let matches = _samsungDb.filter(a => a.regions.some(cc => regionCCs.has(cc)));
+      if (query.length > 0) {
+        matches = matches.filter(a => a.name.toLowerCase().includes(query));
+      }
+
+      sep.hidden = matches.length === 0;
+
+      const addedIds = new Set(enabledApps.map(a => a.appId));
+      for (const dbApp of matches) {
+        const appId   = String(dbApp.id);
+        const isAdded = addedIds.has(appId);
+        const row = document.createElement('div');
+        row.className = 'db-result';
+        row.innerHTML =
+          `<span class="db-result-name">${dbApp.name}</span>` +
+          `<span class="db-result-id">${appId}</span>`;
+        if (!isAdded) {
+          row.onclick = () => {
+            document.getElementById('dialog-name-input').value  = dbApp.name;
+            document.getElementById('dialog-appid-input').value = appId;
+            document.getElementById('dialog-db-search').value   = '';
+            results.innerHTML = '';
+            sep.hidden = true;
+            document.getElementById('dialog-appid-input').focus();
+          };
+        } else {
+          row.style.opacity = '0.4';
+          row.style.cursor  = 'default';
+        }
+        results.appendChild(row);
+      }
+    }
+
     // ── Right-click context menu ─────────────────────────────────────────────
     (function () {
       const menu       = document.getElementById('ctx-menu');
@@ -566,20 +698,29 @@
     // mode: 'edit-custom' → edit existing custom app (both fields editable, "Save" button)
     // mode: 'set-id'      → override catalog app's ID (name disabled, "OK" button)
     function openAppDialog(mode, app) {
-      const overlay   = document.getElementById('app-dialog-overlay');
-      const titleEl   = document.getElementById('dialog-title');
-      const nameInput = document.getElementById('dialog-name-input');
-      const idInput   = document.getElementById('dialog-appid-input');
-      const hintEl    = document.getElementById('dialog-hint');
-      const okBtn     = document.getElementById('dialog-ok');
+      const overlay      = document.getElementById('app-dialog-overlay');
+      const titleEl      = document.getElementById('dialog-title');
+      const nameInput    = document.getElementById('dialog-name-input');
+      const idInput      = document.getElementById('dialog-appid-input');
+      const hintEl       = document.getElementById('dialog-hint');
+      const okBtn        = document.getElementById('dialog-ok');
+      const searchSec    = document.getElementById('dialog-search-section');
+      const dbSearchEl   = document.getElementById('dialog-db-search');
+      const dbResultsEl  = document.getElementById('dialog-db-results');
+      const dbSepEl      = document.getElementById('dialog-search-sep');
 
       if (mode === 'add') {
-        titleEl.textContent    = 'Add Custom App';
+        titleEl.textContent    = 'Add App';
         okBtn.textContent      = 'Add';
         nameInput.value        = '';
         nameInput.disabled     = false;
         idInput.value          = '';
         hintEl.textContent     = '';
+        searchSec.hidden       = false;
+        dbSearchEl.value       = '';
+        dbResultsEl.innerHTML  = '';
+        dbSepEl.hidden         = true;
+        ensureSamsungDb().then(() => updateDbSearch());
       } else if (mode === 'edit-custom') {
         titleEl.textContent    = 'Edit App';
         okBtn.textContent      = 'Save';
@@ -587,6 +728,7 @@
         nameInput.disabled     = false;
         idInput.value          = app.appId || '';
         hintEl.textContent     = '';
+        searchSec.hidden       = true;
       } else { // 'set-id'
         titleEl.textContent    = app.name;
         okBtn.textContent      = 'OK';
@@ -594,14 +736,25 @@
         nameInput.disabled     = true;
         idInput.value          = effectiveAppId(app) || '';
         hintEl.textContent     = app.appId ? 'catalog default: ' + app.appId : '';
+        searchSec.hidden       = true;
       }
 
       overlay.classList.add('visible');
       setTimeout(() => {
-        const focusTarget = nameInput.disabled ? idInput : nameInput;
-        focusTarget.focus();
-        if (mode !== 'add') focusTarget.select();
+        if (mode === 'add') {
+          dbSearchEl.focus();
+        } else {
+          const focusTarget = nameInput.disabled ? idInput : nameInput;
+          focusTarget.focus();
+          focusTarget.select();
+        }
       }, 50);
+
+      dbSearchEl.oninput = () => updateDbSearch();
+      dbSearchEl.onkeydown = e => {
+        if (e.key === 'Enter')  e.preventDefault();
+        if (e.key === 'Escape') { e.preventDefault(); close(); }
+      };
 
       function confirm() {
         const name  = nameInput.value.trim();
@@ -635,6 +788,8 @@
         okBtn.onclick                                       = null;
         document.getElementById('dialog-cancel').onclick   = null;
         nameInput.onkeydown = idInput.onkeydown             = null;
+        dbSearchEl.oninput   = null;
+        dbSearchEl.onkeydown = null;
       }
 
       okBtn.onclick = confirm;

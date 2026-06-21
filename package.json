@@ -4,7 +4,10 @@
   "description": "Samsung TV remote — Electron (Windows) + PWA (iPhone)",
   "author": "Kim Forsberg",
   "license": "MIT",
-  "repository": { "type": "git", "url": "https://github.com/kiforsbe/tvremote.git" },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kiforsbe/tvremote.git"
+  },
   "main": "main.js",
   "scripts": {
     "start": "electron .",
@@ -51,8 +54,18 @@
     },
     "win": {
       "target": [
-        { "target": "nsis",     "arch": ["x64"] },
-        { "target": "portable", "arch": ["x64"] }
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
       ]
     },
     "nsis": {
@@ -62,5 +75,8 @@
       "createStartMenuShortcut": true,
       "shortcutName": "TV Remote"
     }
+  },
+  "dependencies": {
+    "ws": "^8.21.0"
   }
 }

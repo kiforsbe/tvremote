@@ -96,9 +96,13 @@ function setNeedsConfig(on) {
 function connect() {
   if (!getIp()) return;
   if (ws) { ws.close(); ws = null; }
-  const ip    = getIp();
-  const token = localStorage.getItem('tvtoken');
-  const url   = `wss://${ip}:8002/api/v2/channels/samsung.remote.control?name=${btoa('TVRemote')}${token ? '&token=' + token : ''}`;
+  const ip     = getIp();
+  const token  = localStorage.getItem('tvtoken');
+  const params = new URLSearchParams({ ip, name: btoa('TVRemote') });
+  if (token) params.set('token', token);
+  // Route through the desktop proxy — avoids the TV's self-signed cert being
+  // rejected by mobile browsers (Electron handles cert bypass server-side).
+  const url = `ws://${window.location.host}/tv?${params}`;
   ws = new WebSocket(url);
   ws.onopen    = () => setStatus('connecting');
   ws.onmessage = e => {

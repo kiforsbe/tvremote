@@ -1,8 +1,9 @@
 const { app, BrowserWindow, globalShortcut, Menu, ipcMain, session, screen } = require('electron');
-const http = require('http');
-const fs   = require('fs');
-const path = require('path');
-const dgram = require('dgram');
+const http      = require('http');
+const fs        = require('fs');
+const path      = require('path');
+const dgram     = require('dgram');
+const WebSocket = require('ws');
 
 const APP_DIR   = path.join(__dirname, 'app');
 const HTTP_PORT = 3000;
@@ -38,7 +39,7 @@ const MIME = {
 
 
 function startHttpServer() {
-  http.createServer(async (req, res) => {
+  const server = http.createServer(async (req, res) => {
     const pathname = new URL(req.url, 'http://localhost').pathname;
 
     // ── TV discovery (SSDP runs server-side; browsers can't do UDP multicast) ─
@@ -99,7 +100,35 @@ function startHttpServer() {
       res.writeHead(200, { 'Content-Type': MIME[path.extname(file)] || 'application/octet-stream' });
       res.end(data);
     });
-  }).listen(HTTP_PORT, '0.0.0.0', () => {
+  });
+
+  // WebSocket proxy: phone connects ws://desktop:3000/tv, we relay to wss://tv:8002.
+  // This avoids the Samsung TV's self-signed cert being rejected by mobile browsers.
+  const wss = new WebSocket.Server({ noServer: true });
+  server.on('upgrade', (request, socket, head) => {
+    const url = new URL(request.url, 'http://localhost');
+    if (url.pathname !== '/tv') { socket.destroy(); return; }
+
+    wss.handleUpgrade(request, socket, head, phoneWs => {
+      const ip    = url.searchParams.get('ip');
+      const name  = url.searchParams.get('name') || btoa('TVRemote');
+      const token = url.searchParams.get('token');
+      if (!ip) { phoneWs.close(1008, 'missing ip'); return; }
+
+      const tvUrl = `wss://${ip}:8002/api/v2/channels/samsung.remote.control?name=${name}${token ? '&token=' + token : ''}`;
+      const tvWs  = new WebSocket(tvUrl, { rejectUnauthorized: false });
+
+      tvWs.on('message', data => { if (phoneWs.readyState === WebSocket.OPEN) phoneWs.send(data); });
+      tvWs.on('close',   ()   => { if (phoneWs.readyState === WebSocket.OPEN) phoneWs.close(); });
+      tvWs.on('error',   ()   => { if (phoneWs.readyState === WebSocket.OPEN) phoneWs.close(); });
+
+      phoneWs.on('message', data => { if (tvWs.readyState === WebSocket.OPEN) tvWs.send(data); });
+      phoneWs.on('close',   ()   => { if (tvWs.readyState   !== WebSocket.CLOSED) tvWs.close(); });
+      phoneWs.on('error',   ()   => { if (tvWs.readyState   !== WebSocket.CLOSED) tvWs.close(); });
+    });
+  });
+
+  server.listen(HTTP_PORT, '0.0.0.0', () => {
     console.log(`Remote available at http://<this-pc-ip>:${HTTP_PORT}`);
   });
 }

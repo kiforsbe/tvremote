@@ -118,13 +118,13 @@ function startHttpServer() {
       const tvUrl = `wss://${ip}:8002/api/v2/channels/samsung.remote.control?name=${name}${token ? '&token=' + token : ''}`;
       const tvWs  = new WebSocket(tvUrl, { rejectUnauthorized: false });
 
-      tvWs.on('message', data => { if (phoneWs.readyState === WebSocket.OPEN) phoneWs.send(data); });
-      tvWs.on('close',   ()   => { if (phoneWs.readyState === WebSocket.OPEN) phoneWs.close(); });
-      tvWs.on('error',   ()   => { if (phoneWs.readyState === WebSocket.OPEN) phoneWs.close(); });
+      tvWs.on('message', (data, isBinary) => { if (phoneWs.readyState === WebSocket.OPEN) phoneWs.send(data, { binary: isBinary }); });
+      tvWs.on('close',   ()             => { if (phoneWs.readyState === WebSocket.OPEN) phoneWs.close(); });
+      tvWs.on('error',   ()             => { if (phoneWs.readyState === WebSocket.OPEN) phoneWs.close(); });
 
-      phoneWs.on('message', data => { if (tvWs.readyState === WebSocket.OPEN) tvWs.send(data); });
-      phoneWs.on('close',   ()   => { if (tvWs.readyState   !== WebSocket.CLOSED) tvWs.close(); });
-      phoneWs.on('error',   ()   => { if (tvWs.readyState   !== WebSocket.CLOSED) tvWs.close(); });
+      phoneWs.on('message', (data, isBinary) => { if (tvWs.readyState === WebSocket.OPEN) tvWs.send(data, { binary: isBinary }); });
+      phoneWs.on('close',   ()               => { if (tvWs.readyState !== WebSocket.CLOSED) tvWs.close(); });
+      phoneWs.on('error',   ()               => { if (tvWs.readyState !== WebSocket.CLOSED) tvWs.close(); });
     });
   });
 

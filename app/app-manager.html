@@ -46,6 +46,11 @@
     .app-row input[type=checkbox] { width: 14px; height: 14px; accent-color: #0067c0; cursor: pointer; flex-shrink: 0; }
 
     .app-row-name { flex: 1; font-size: 13px; cursor: pointer; }
+    .app-row-name.has-override::after {
+      content: ' *';
+      color: rgba(255,200,100,0.8);
+      font-size: 11px;
+    }
 
     .divider { height: 1px; background: rgba(255,255,255,0.08); flex-shrink: 0; }
 
@@ -165,6 +170,77 @@
       font-size: 10px;
       color: #60cdff;
     }
+
+    /* ── Right-click context menu ───────────────── */
+    #ctx-menu {
+      position: fixed;
+      z-index: 100;
+      background: #2d2d2d;
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 6px;
+      padding: 4px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+      min-width: 140px;
+      display: none;
+      -webkit-app-region: no-drag;
+    }
+    #ctx-menu.visible { display: block; }
+    .ctx-item {
+      padding: 6px 12px;
+      border-radius: 4px;
+      font-size: 13px;
+      cursor: pointer;
+      color: rgba(255,255,255,0.9);
+      white-space: nowrap;
+    }
+    .ctx-item:hover { background: rgba(255,255,255,0.08); }
+    .ctx-item.danger { color: rgba(255,100,100,0.9); }
+    .ctx-item.danger:hover { background: rgba(255,80,80,0.12); }
+
+    /* ── App ID edit popup ──────────────────────── */
+    #appid-overlay {
+      position: fixed; inset: 0;
+      z-index: 200;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0,0,0,0.45);
+      -webkit-app-region: no-drag;
+    }
+    #appid-overlay.visible { display: flex; }
+
+    #appid-popup {
+      background: #252525;
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 8px;
+      padding: 18px 20px 16px;
+      width: 300px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    #appid-popup h2 { font-size: 13px; font-weight: 600; }
+    #appid-popup .subtitle {
+      font-size: 11px;
+      color: rgba(255,255,255,0.45);
+      margin-top: -8px;
+      font-family: 'Cascadia Code', 'Consolas', monospace;
+    }
+    #appid-input {
+      font-family: 'Cascadia Code', 'Consolas', monospace;
+      font-size: 12px;
+    }
+    .popup-actions { display: flex; gap: 8px; justify-content: flex-end; }
+    .popup-actions button {
+      height: 28px; padding: 0 14px;
+      border-radius: 4px; font-family: inherit; font-size: 13px;
+      cursor: pointer; border: 1px solid transparent;
+    }
+    #popup-cancel { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.09); color: rgba(255,255,255,0.9); }
+    #popup-cancel:hover { background: rgba(255,255,255,0.1); }
+    #popup-ok     { background: #0067c0; color: #fff; }
+    #popup-ok:hover { background: #1975c9; }
   </style>
 </head>
 <body>
@@ -194,6 +270,25 @@
     <button class="btn-action btn-save"   id="btn-save">Save</button>
   </div>
 
+  <!-- Right-click context menu -->
+  <div id="ctx-menu">
+    <div class="ctx-item" id="ctx-set-id">Set App ID…</div>
+    <div class="ctx-item danger" id="ctx-reset-id" style="display:none">Reset to default</div>
+  </div>
+
+  <!-- App ID edit popup -->
+  <div id="appid-overlay">
+    <div id="appid-popup">
+      <h2 id="popup-title">Set App ID</h2>
+      <div class="subtitle" id="popup-current"></div>
+      <input type="text" id="appid-input" placeholder="Samsung App ID" spellcheck="false" autocomplete="off">
+      <div class="popup-actions">
+        <button id="popup-cancel">Cancel</button>
+        <button id="popup-ok">OK</button>
+      </div>
+    </div>
+  </div>
+
   <script src="catalog.js"></script>
   <script>
     const params        = new URLSearchParams(location.search);
@@ -201,6 +296,10 @@
     const ip            = params.get('ip')     || '';
     let selectedRegion  = params.get('region') || 'US';
     let tvAvailable     = null; // null = not synced; Set<appId> after sync
+
+    // Per-catalog-app overrides: catalogId → custom appId string.
+    // Cleared when the user switches region (region brings its own IDs).
+    const appIdOverrides = new Map();
 
     // ── Region selector ──────────────────────────────────────────────────────
     const regionSel = document.getElementById('region-select');
@@ -216,16 +315,20 @@
 
     function applyRegion(newRegion) {
       selectedRegion = newRegion;
-      const newCat   = getCatalogForRegion(newRegion);
-      const catMap   = new Map(newCat.map(a => [a.id, a]));
+      appIdOverrides.clear();
+      const newCat = getCatalogForRegion(newRegion);
+      const catMap = new Map(newCat.map(a => [a.id, a]));
 
-      // Keep custom apps; update catalog apps' appIds; drop those now unavailable
       enabledApps = enabledApps
         .map(app => app.custom ? app : (catMap.get(app.id) ? { ...catMap.get(app.id) } : null))
         .filter(Boolean);
 
-      tvAvailable = null; // sync results no longer valid for new region
+      tvAvailable = null;
       render();
+    }
+
+    function effectiveAppId(app) {
+      return appIdOverrides.has(app.id) ? appIdOverrides.get(app.id) : app.appId;
     }
 
     // ── Catalog helpers ──────────────────────────────────────────────────────
@@ -266,11 +369,14 @@
       const rows = buildRows();
 
       rows.forEach(app => {
+        const appId = effectiveAppId(app);
+
         const rowEl = document.createElement('div');
         rowEl.className = 'app-row';
+        rowEl.dataset.id = app.id;
 
         if (tvAvailable !== null && !app.custom) {
-          if (app.appId && tvAvailable.has(app.appId)) {
+          if (appId && tvAvailable.has(appId)) {
             rowEl.classList.add('confirmed');
           } else {
             rowEl.classList.add('unavailable');
@@ -279,7 +385,6 @@
 
         if (app.enabled) {
           rowEl.draggable = true;
-          rowEl.dataset.id = app.id;
           const handle = document.createElement('span');
           handle.className = 'drag-handle';
           handle.textContent = '⠿';
@@ -291,7 +396,7 @@
         cb.checked = app.enabled;
         cb.onchange = () => {
           if (cb.checked) {
-            enabledApps.push(app);
+            enabledApps.push({ ...app, appId: effectiveAppId(app) });
           } else {
             enabledApps = enabledApps.filter(a => a.id !== app.id);
           }
@@ -299,9 +404,10 @@
         };
 
         const nameEl = document.createElement('span');
-        nameEl.className   = 'app-row-name';
+        nameEl.className = 'app-row-name';
+        if (appIdOverrides.has(app.id)) nameEl.classList.add('has-override');
         nameEl.textContent = app.icon + ' ' + app.name;
-        nameEl.onclick     = () => { cb.checked = !cb.checked; cb.onchange(); };
+        nameEl.onclick = () => { cb.checked = !cb.checked; cb.onchange(); };
 
         rowEl.appendChild(cb);
         rowEl.appendChild(nameEl);
@@ -310,6 +416,108 @@
     }
 
     render();
+
+    // ── Right-click context menu ─────────────────────────────────────────────
+    (function () {
+      const menu      = document.getElementById('ctx-menu');
+      const itemSet   = document.getElementById('ctx-set-id');
+      const itemReset = document.getElementById('ctx-reset-id');
+      let _ctxApp     = null;
+
+      function hideMenu() {
+        menu.classList.remove('visible');
+        _ctxApp = null;
+      }
+
+      document.getElementById('app-list').addEventListener('contextmenu', e => {
+        e.preventDefault();
+        const row = e.target.closest('.app-row');
+        if (!row) return;
+
+        const id  = row.dataset.id;
+        const rows = buildRows();
+        _ctxApp = rows.find(a => a.id === id) || null;
+        if (!_ctxApp) return;
+
+        itemReset.style.display = appIdOverrides.has(id) ? '' : 'none';
+
+        // Position within viewport bounds
+        const mw = 160, mh = itemReset.style.display === 'none' ? 36 : 68;
+        const x  = Math.min(e.clientX, window.innerWidth  - mw - 8);
+        const y  = Math.min(e.clientY, window.innerHeight - mh - 8);
+        menu.style.left = x + 'px';
+        menu.style.top  = y + 'px';
+        menu.classList.add('visible');
+      });
+
+      document.addEventListener('mousedown', e => {
+        if (!menu.contains(e.target)) hideMenu();
+      });
+
+      itemSet.onclick = () => {
+        if (!_ctxApp) return;
+        const app = _ctxApp;
+        hideMenu();
+        openAppIdPopup(app);
+      };
+
+      itemReset.onclick = () => {
+        if (!_ctxApp) return;
+        const id = _ctxApp.id;
+        appIdOverrides.delete(id);
+        const idx = enabledApps.findIndex(a => a.id === id);
+        if (idx !== -1) {
+          const cat    = getCatalogForRegion(selectedRegion);
+          const catApp = cat.find(a => a.id === id);
+          if (catApp) enabledApps[idx] = { ...enabledApps[idx], appId: catApp.appId };
+        }
+        tvAvailable = null;
+        hideMenu();
+        render();
+      };
+    })();
+
+    // ── App ID popup ─────────────────────────────────────────────────────────
+    function openAppIdPopup(app) {
+      const overlay  = document.getElementById('appid-overlay');
+      const input    = document.getElementById('appid-input');
+      const title    = document.getElementById('popup-title');
+      const subtitle = document.getElementById('popup-current');
+
+      title.textContent    = 'Set App ID — ' + app.name;
+      subtitle.textContent = 'catalog default: ' + (app.appId || '—');
+      input.value          = effectiveAppId(app) || '';
+      overlay.classList.add('visible');
+      setTimeout(() => { input.focus(); input.select(); }, 50);
+
+      function confirm() {
+        const val = input.value.trim();
+        if (val && val !== app.appId) {
+          appIdOverrides.set(app.id, val);
+          const idx = enabledApps.findIndex(a => a.id === app.id);
+          if (idx !== -1) enabledApps[idx] = { ...enabledApps[idx], appId: val };
+        } else if (!val || val === app.appId) {
+          appIdOverrides.delete(app.id);
+        }
+        tvAvailable = null;
+        close();
+        render();
+      }
+
+      function close() {
+        overlay.classList.remove('visible');
+        document.getElementById('popup-ok').onclick     = null;
+        document.getElementById('popup-cancel').onclick = null;
+        input.onkeydown = null;
+      }
+
+      document.getElementById('popup-ok').onclick     = confirm;
+      document.getElementById('popup-cancel').onclick = close;
+      input.onkeydown = e => {
+        if (e.key === 'Enter')  { e.preventDefault(); confirm(); }
+        if (e.key === 'Escape') { e.preventDefault(); close(); }
+      };
+    }
 
     // ── Sync with TV ─────────────────────────────────────────────────────────
     (function () {
@@ -320,7 +528,6 @@
         btn.disabled = true;
         btn.textContent = 'Syncing…';
 
-        // Auto-detect region from TV's country code
         try {
           const info = await window.appManagerAPI.getTvInfo(ip);
           if (info && info.countryCode) {
@@ -333,9 +540,8 @@
           }
         } catch (_) {}
 
-        // POST-probe each catalog app for the selected region
         const cat    = getCatalogForRegion(selectedRegion);
-        const appIds = cat.map(a => a.appId).filter(Boolean);
+        const appIds = cat.map(a => effectiveAppId(a)).filter(Boolean);
 
         let result;
         try {
@@ -423,7 +629,9 @@
     document.getElementById('btn-cancel').onclick = () => window.appManagerAPI.cancel();
 
     document.addEventListener('keydown', e => {
-      if (e.key === 'Escape') window.appManagerAPI.cancel();
+      if (e.key === 'Escape' && !document.getElementById('appid-overlay').classList.contains('visible')) {
+        window.appManagerAPI.cancel();
+      }
     });
   </script>
 </body>

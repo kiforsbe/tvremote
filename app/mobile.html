@@ -14,48 +14,44 @@
     [hidden] { display: none !important; }
 
     :root {
-      --bg:          #0f0f0f;
-      --remote-body: #141414;
-      --btn:         #1e1e1e;
-      --btn-hover:   #2a2a2a;
-      --btn-active:  #333333;
-      --text:        #e0e0e0;
-      --text-dim:    #555555;
-      --power-red:   #c0392b;
-      --accent:      #60cdff;
+      --bg:        #0f0f0f;
+      --surface:   #141414;
+      --btn:       #1e1e1e;
+      --btn-hi:    #2a2a2a;
+      --btn-act:   #333333;
+      --text:      #e0e0e0;
+      --dim:       #4a4a4a;
+      --red:       #c0392b;
+      --accent:    #60cdff;
+      --pad:       max(22px, env(safe-area-inset-left));
     }
 
-    html { background: var(--bg); }
+    html, body { height: 100%; background: var(--surface); }
 
     body {
-      background: var(--bg);
       color: var(--text);
       font-family: -apple-system, 'Segoe UI', Arial, sans-serif;
-      min-height: 100dvh;
       display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: max(16px, env(safe-area-inset-top))
-               max(8px,  env(safe-area-inset-right))
-               max(24px, env(safe-area-inset-bottom))
-               max(8px,  env(safe-area-inset-left));
+      justify-content: center;
       -webkit-tap-highlight-color: transparent;
+      overflow-x: hidden;
     }
 
-    button { cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent; outline: none; }
-    input  { outline: none; }
+    button { outline: none; cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent; border: none; }
+    input  { outline: none; font-family: inherit; }
 
-    /* ── Remote body ─────────────────────────────────────────────────────── */
+    /* ── Remote fills entire screen ──────────────────────────────────────── */
     .remote {
-      background: var(--remote-body);
-      border-radius: 28px;
-      width: 200px;
-      padding: 20px 16px 26px;
+      width: 100%;
+      max-width: 540px;
       display: flex;
       flex-direction: column;
-      align-items: center;
       gap: 14px;
-      box-shadow: 0 10px 40px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.04);
+      padding:
+        max(18px, env(safe-area-inset-top))
+        var(--pad)
+        max(36px, env(safe-area-inset-bottom))
+        var(--pad);
     }
 
     /* ── Generic button ──────────────────────────────────────────────────── */
@@ -63,429 +59,349 @@
       background: var(--btn);
       border: none;
       color: var(--text);
-      border-radius: 10px;
-      font-size: 13px;
+      border-radius: 12px;
+      font-size: 14px;
       display: flex;
       align-items: center;
       justify-content: center;
-      transition: background 0.12s;
+      transition: background 0.1s;
     }
-    .btn:active { background: var(--btn-active); }
+    .btn:active { background: var(--btn-act); }
 
-    /* ── Status LED ──────────────────────────────────────────────────────── */
+    /* ── Status dot ──────────────────────────────────────────────────────── */
     .status-dot {
-      width: 8px; height: 8px;
-      border-radius: 50%;
+      width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
       background: radial-gradient(circle at 35% 30%, #2a2a2a, #111);
       box-shadow: inset 0 1px 2px rgba(0,0,0,0.8);
-      flex-shrink: 0;
       transition: background 0.3s, box-shadow 0.3s;
     }
     .status-dot.connecting {
       background: radial-gradient(circle at 35% 30%, #ffd166, #e67e22);
-      box-shadow: 0 0 6px 2px rgba(230,126,34,0.55), inset 0 1px 2px rgba(255,255,255,0.25);
+      box-shadow: 0 0 8px 2px rgba(230,126,34,0.5), inset 0 1px 2px rgba(255,255,255,0.2);
     }
     .status-dot.ok {
       background: radial-gradient(circle at 35% 30%, #6ee88a, #27ae60);
-      box-shadow: 0 0 6px 2px rgba(39,174,96,0.55), inset 0 1px 2px rgba(255,255,255,0.25);
+      box-shadow: 0 0 8px 2px rgba(39,174,96,0.5), inset 0 1px 2px rgba(255,255,255,0.2);
     }
     .status-dot.err {
       background: radial-gradient(circle at 35% 30%, #f1665a, #c0392b);
-      box-shadow: 0 0 6px 2px rgba(192,57,43,0.55), inset 0 1px 2px rgba(255,255,255,0.25);
+      box-shadow: 0 0 8px 2px rgba(192,57,43,0.5), inset 0 1px 2px rgba(255,255,255,0.2);
     }
 
     /* ── Power row ───────────────────────────────────────────────────────── */
     .power-row {
-      width: 100%;
       display: flex;
-      justify-content: space-between;
       align-items: center;
-      padding: 0 4px;
+      gap: 8px;
     }
+    .spacer { flex: 1; }
 
-    .btn-settings, .btn-src {
-      width: 32px; height: 32px;
-      border-radius: 50%;
-      background: transparent;
-      border: none;
-      color: var(--text-dim);
-      display: flex;
-      align-items: center;
-      justify-content: center;
+    .btn-settings {
+      width: 38px; height: 38px; border-radius: 50%;
+      background: transparent; border: none; color: var(--dim);
+      font-size: 18px; display: flex; align-items: center; justify-content: center;
       transition: color 0.12s;
     }
-    .btn-settings { font-size: 14px; }
-    .btn-src      { font-size: 8px; font-weight: 700; letter-spacing: 0.3px; }
-    .btn-settings:active, .btn-src:active { color: var(--text); }
-    .btn-settings.open { color: var(--text); }
-
-    @keyframes settings-pulse {
-      0%, 100% { opacity: 1; }
-      50%       { opacity: 0.4; }
-    }
+    .btn-settings:active { color: var(--text); }
+    .btn-settings.open   { color: var(--text); }
     .btn-settings.needs-config {
       color: #ffd166;
-      animation: settings-pulse 1.5s ease-in-out infinite;
+      animation: pulse 1.5s ease-in-out infinite;
     }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+    .btn-src {
+      background: transparent; border: none; color: var(--dim);
+      font-size: 9px; font-weight: 700; letter-spacing: 0.4px;
+      padding: 8px; transition: color 0.12s;
+    }
+    .btn-src:active { color: var(--text); }
 
     .btn-power {
-      width: 44px; height: 22px;
-      border-radius: 11px;
-      background: var(--power-red);
-      font-size: 12px;
-      border: none;
+      height: 32px; padding: 0 18px;
+      border-radius: 16px; background: var(--red);
+      font-size: 14px; color: var(--text);
     }
     .btn-power:active { opacity: 0.8; }
 
     /* ── Settings panel ──────────────────────────────────────────────────── */
     .settings-panel {
-      width: 100%;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
+      display: flex; flex-direction: column; gap: 8px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 16px;
+      padding: 14px;
     }
 
     .btn-discover {
-      width: 100%;
-      padding: 9px 0;
-      border-radius: 8px;
-      font-size: 12px;
-      border: 1px solid rgba(255,255,255,0.1);
+      width: 100%; padding: 12px;
+      border-radius: 10px; font-size: 14px;
       background: var(--btn);
+      border: 1px solid rgba(255,255,255,0.09);
       color: var(--text);
     }
-    .btn-discover:active { background: var(--btn-active); }
-    .btn-discover:disabled { opacity: 0.55; }
+    .btn-discover:active   { background: var(--btn-act); }
+    .btn-discover:disabled { opacity: 0.5; }
 
-    .discover-results { display: flex; flex-direction: column; gap: 4px; }
+    .discover-results { display: flex; flex-direction: column; gap: 6px; }
 
     .discover-tv-btn {
-      width: 100%;
-      padding: 8px 10px;
-      background: var(--btn);
-      border: 1px solid rgba(255,255,255,0.08);
-      border-radius: 8px;
-      color: var(--text);
-      font-size: 12px;
-      text-align: left;
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
+      width: 100%; padding: 10px 14px;
+      background: var(--btn); border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 10px; color: var(--text);
+      font-size: 13px; text-align: left;
+      display: flex; flex-direction: column; gap: 2px;
     }
-    .discover-tv-btn:active { background: var(--btn-active); }
-    .discover-tv-ip   { color: var(--text-dim); font-size: 10px; }
+    .discover-tv-btn:active { background: var(--btn-act); }
+    .discover-tv-ip { color: var(--dim); font-size: 11px; }
 
-    .ip-row { width: 100%; display: flex; gap: 6px; }
+    .ip-row { display: flex; gap: 8px; }
     .ip-row input {
       flex: 1; min-width: 0;
-      background: var(--btn);
-      border: 1px solid #2a2a2a;
-      color: var(--text);
-      padding: 8px 10px;
-      border-radius: 8px;
-      font-size: 13px;
-      font-family: inherit;
+      background: var(--btn); border: 1px solid rgba(255,255,255,0.09);
+      color: var(--text); padding: 10px 12px; border-radius: 10px; font-size: 14px;
     }
-    .ip-row input:focus { border-color: #555; }
+    .ip-row input:focus { border-color: rgba(255,255,255,0.25); }
     .btn-apply {
-      width: 40px; height: 40px;
-      border-radius: 8px;
-      font-size: 13px;
-      flex-shrink: 0;
+      width: 44px; height: 44px; border-radius: 10px; font-size: 14px; flex-shrink: 0;
     }
 
-    /* ── Row of buttons ──────────────────────────────────────────────────── */
-    .row { display: flex; gap: 6px; align-items: center; }
+    /* ── Divider ─────────────────────────────────────────────────────────── */
+    .divider {
+      height: 1px; background: rgba(255,255,255,0.055); margin: 2px 0;
+    }
 
+    /* ── Button row (GUIDE / 123 / Apps) ─────────────────────────────────── */
+    .row { display: flex; gap: 10px; }
     .btn-sm {
-      flex: 1;
-      min-height: 38px;
-      border-radius: 8px;
-      font-size: 12px;
+      flex: 1; height: 52px; border-radius: 14px; font-size: 14px; font-weight: 500;
     }
 
     /* ── Colour buttons ──────────────────────────────────────────────────── */
+    .color-row {
+      display: flex; justify-content: space-evenly; align-items: center;
+    }
     .btn-color {
-      width: 18px; height: 18px;
-      border-radius: 50%;
-      padding: 0;
-      flex-shrink: 0;
-      border: none;
+      width: 26px; height: 26px; border-radius: 50%; border: none;
     }
     .btn-red    { background: #e74c3c; }
     .btn-green  { background: #2ecc71; }
     .btn-yellow { background: #f1c40f; }
     .btn-blue   { background: #3498db; }
+    .btn-color:active { opacity: 0.7; transform: scale(0.92); }
 
     /* ── Numpad ──────────────────────────────────────────────────────────── */
-    .numpad { width: 100%; display: flex; flex-direction: column; gap: 5px; }
-    .numpad-row { display: flex; justify-content: center; gap: 4px; }
+    .numpad { display: flex; flex-direction: column; gap: 8px; }
+    .numpad-row { display: flex; gap: 10px; }
     .btn-digit {
-      width: 32px; height: 32px;
-      border-radius: 7px;
-      background: var(--btn);
-      border: none;
-      color: var(--text);
-      font-size: 13px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      flex: 1; height: 48px; border-radius: 12px;
+      background: var(--btn); border: none; color: var(--text); font-size: 16px;
+      display: flex; align-items: center; justify-content: center;
     }
-    .btn-digit:active { background: var(--btn-active); }
+    .btn-digit:active { background: var(--btn-act); }
 
     /* ── Pinned apps ─────────────────────────────────────────────────────── */
-    .pinned-apps { display: flex; gap: 8px; justify-content: center; }
+    .pinned-apps {
+      display: flex; justify-content: space-evenly;
+    }
     .pinned-app-btn {
-      width: 50px; height: 50px;
-      border-radius: 50%;
-      font-size: 18px;
+      width: clamp(58px, 18vw, 72px);
+      height: clamp(58px, 18vw, 72px);
+      border-radius: 50%; font-size: clamp(20px, 6vw, 28px);
     }
 
     /* ── Navigation ring ─────────────────────────────────────────────────── */
     .nav-ring {
       position: relative;
-      width: 130px; height: 130px;
-      flex-shrink: 0;
-      border-radius: 50%;
-      overflow: hidden;
+      width:  min(220px, 56vw);
+      height: min(220px, 56vw);
+      border-radius: 50%; overflow: hidden;
+      align-self: center; flex-shrink: 0;
     }
     .nav-track { position: absolute; inset: 0; background: var(--btn); }
     .nav-dir {
-      position: absolute; inset: 0;
-      background: transparent; border: none;
-      color: var(--text-dim); font-size: 14px;
-      display: flex; transition: background 0.12s;
+      position: absolute; inset: 0; background: transparent; border: none;
+      color: var(--dim); font-size: clamp(14px, 4vw, 18px);
+      display: flex; transition: background 0.1s;
     }
     .nav-dir:active { color: var(--text); background: rgba(255,255,255,0.14); }
-    .nav-up    { clip-path: polygon(0% 0%, 100% 0%, 50% 50%);     align-items: flex-start; justify-content: center;     padding-top:    10px; }
-    .nav-down  { clip-path: polygon(0% 100%, 100% 100%, 50% 50%); align-items: flex-end;   justify-content: center;     padding-bottom: 10px; }
-    .nav-left  { clip-path: polygon(0% 0%, 0% 100%, 50% 50%);     align-items: center;     justify-content: flex-start; padding-left:   10px; }
-    .nav-right { clip-path: polygon(100% 0%, 100% 100%, 50% 50%); align-items: center;     justify-content: flex-end;   padding-right:  10px; }
+    .nav-up    { clip-path: polygon(0% 0%,100% 0%,50% 50%);     align-items:flex-start; justify-content:center;     padding-top:    clamp(10px,3vw,14px); }
+    .nav-down  { clip-path: polygon(0% 100%,100% 100%,50% 50%); align-items:flex-end;   justify-content:center;     padding-bottom: clamp(10px,3vw,14px); }
+    .nav-left  { clip-path: polygon(0% 0%,0% 100%,50% 50%);     align-items:center;     justify-content:flex-start; padding-left:   clamp(10px,3vw,14px); }
+    .nav-right { clip-path: polygon(100% 0%,100% 100%,50% 50%); align-items:center;     justify-content:flex-end;   padding-right:  clamp(10px,3vw,14px); }
     .nav-ok {
-      position: absolute; top: 50%; left: 50%;
-      transform: translate(-50%, -50%);
-      width: 52px; height: 52px;
+      position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
+      width: min(64px, 17vw); height: min(64px, 17vw);
       border-radius: 50%; z-index: 1;
-      background: var(--btn-hover); border: none;
-      color: var(--text); font-size: 13px;
+      background: var(--btn-hi); border: none; color: var(--text);
+      font-size: clamp(13px, 3.5vw, 16px);
       display: flex; align-items: center; justify-content: center;
-      transition: background 0.12s;
+      transition: background 0.1s;
     }
-    .nav-ok:active { background: #3d3d3d; }
+    .nav-ok:active { background: var(--btn-act); }
 
     /* ── Icon rows ───────────────────────────────────────────────────────── */
-    .icon-row { display: flex; gap: 14px; }
+    .icon-row {
+      display: flex; justify-content: space-evenly; align-items: center;
+    }
     .btn-icon {
-      width: 50px; height: 50px;
-      border-radius: 50%; font-size: 18px;
+      width: clamp(54px, 15vw, 68px);
+      height: clamp(54px, 15vw, 68px);
+      border-radius: 50%; font-size: clamp(18px, 5vw, 24px);
     }
 
     /* ── Rockers ─────────────────────────────────────────────────────────── */
-    .rockers { display: flex; gap: 12px; }
-    .rocker { display: flex; flex-direction: column; align-items: center; gap: 3px; }
-    .rocker-mute { justify-content: center; }
-    .rocker-label { font-size: 10px; color: var(--text-dim); letter-spacing: 0.5px; margin-bottom: 2px; }
+    .rockers { display: flex; gap: 14px; align-items: stretch; }
+    .rocker { flex: 1; display: flex; flex-direction: column; align-items: stretch; gap: 6px; }
+    .rocker-mute { justify-content: center; align-items: center; }
+    .rocker-label {
+      font-size: 10px; color: var(--dim); letter-spacing: 0.6px;
+      text-align: center; text-transform: uppercase; margin-bottom: 2px;
+    }
     .btn-rocker {
-      width: 48px; min-height: 50px;
-      border-radius: 8px; font-size: 20px; font-weight: 300;
+      flex: 1; min-height: 54px; border-radius: 14px;
+      font-size: clamp(22px, 6vw, 28px); font-weight: 300;
+    }
+    .btn-mute {
+      width: clamp(54px, 15vw, 68px);
+      height: clamp(54px, 15vw, 68px);
+      border-radius: 50%; font-size: clamp(20px, 5.5vw, 26px);
     }
 
     /* ── Flash animation ─────────────────────────────────────────────────── */
     @keyframes btn-flash {
-      0%   { box-shadow: inset 0 0 0 100px rgba(255,255,255,0.28); }
-      100% { box-shadow: inset 0 0 0 100px rgba(255,255,255,0);    }
+      0%   { box-shadow: inset 0 0 0 100px rgba(255,255,255,0.25); }
+      100% { box-shadow: inset 0 0 0 100px rgba(255,255,255,0); }
     }
-    .btn-flash { animation: btn-flash 0.8s ease-out; }
+    .btn-flash { animation: btn-flash 0.7s ease-out; }
 
-    /* ── App modal (full-screen overlay) ─────────────────────────────────── */
+    /* ── Full-screen app modal ───────────────────────────────────────────── */
     .app-modal {
-      position: fixed;
-      inset: 0;
-      z-index: 100;
-      background: #1a1a1a;
-      display: flex;
-      flex-direction: column;
+      position: fixed; inset: 0; z-index: 100;
+      background: #181818;
+      display: flex; flex-direction: column;
       padding-top:    env(safe-area-inset-top);
-      padding-bottom: max(16px, env(safe-area-inset-bottom));
+      padding-bottom: max(20px, env(safe-area-inset-bottom));
     }
 
     .app-modal-header {
-      display: flex;
-      align-items: center;
-      padding: 16px 16px 12px;
-      border-bottom: 1px solid rgba(255,255,255,0.07);
-      gap: 8px;
-      flex-shrink: 0;
+      display: flex; align-items: center; padding: 18px 20px 14px;
+      border-bottom: 1px solid rgba(255,255,255,0.07); gap: 10px; flex-shrink: 0;
     }
-    .app-modal-title { font-size: 17px; font-weight: 600; flex: 1; }
+    .app-modal-title { font-size: 18px; font-weight: 600; flex: 1; }
 
     .btn-modal-action {
-      background: rgba(255,255,255,0.09);
-      border: none;
-      color: var(--text);
-      font-size: 13px;
-      padding: 0 14px;
-      border-radius: 8px;
-      height: 34px;
-      display: flex;
-      align-items: center;
+      background: rgba(255,255,255,0.09); border: none; color: var(--text);
+      font-size: 14px; padding: 0 16px; border-radius: 10px; height: 36px;
+      display: flex; align-items: center;
     }
     .btn-modal-action:active { background: rgba(255,255,255,0.16); }
     .btn-modal-action.active  { color: var(--accent); }
 
     .app-list {
-      flex: 1;
-      overflow-y: auto;
-      -webkit-overflow-scrolling: touch;
+      flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch;
     }
 
     .app-row {
-      display: flex;
-      align-items: center;
-      padding: 0 16px;
-      min-height: 54px;
-      gap: 10px;
+      display: flex; align-items: center;
+      padding: 0 20px; min-height: 58px; gap: 12px;
       border-bottom: 1px solid rgba(255,255,255,0.04);
     }
-
     .app-row-launch {
-      flex: 1;
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      background: transparent;
-      border: none;
-      color: var(--text);
-      text-align: left;
-      padding: 10px 0;
-      min-width: 0;
+      flex: 1; display: flex; align-items: center; gap: 16px;
+      background: transparent; border: none; color: var(--text);
+      text-align: left; padding: 10px 0; min-width: 0;
     }
-    .app-row-launch:active { opacity: 0.6; }
-    .app-row-icon { font-size: 22px; width: 30px; text-align: center; flex-shrink: 0; }
-    .app-row-name { font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .app-row-launch:active { opacity: 0.55; }
+    .app-row-icon { font-size: 24px; width: 32px; text-align: center; flex-shrink: 0; }
+    .app-row-name { font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-    .app-row-move {
-      display: flex;
-      flex-direction: column;
-      gap: 3px;
-      flex-shrink: 0;
-    }
+    .app-row-move { display: flex; flex-direction: column; gap: 4px; flex-shrink: 0; }
     .btn-move {
-      width: 30px; height: 26px;
-      background: rgba(255,255,255,0.07);
-      border: none; color: var(--text-dim);
-      border-radius: 5px; font-size: 12px;
+      width: 34px; height: 28px; background: rgba(255,255,255,0.07); border: none;
+      color: var(--dim); border-radius: 6px; font-size: 13px;
       display: flex; align-items: center; justify-content: center;
     }
-    .btn-move:active { background: rgba(255,255,255,0.14); color: var(--text); }
-    .btn-move:disabled { opacity: 0.25; pointer-events: none; }
+    .btn-move:active  { background: rgba(255,255,255,0.14); color: var(--text); }
+    .btn-move:disabled { opacity: 0.2; pointer-events: none; }
 
     .btn-remove {
-      width: 32px; height: 32px;
-      background: rgba(192,57,43,0.18);
-      border: none; color: #e74c3c;
-      border-radius: 8px; font-size: 18px;
-      display: flex; align-items: center; justify-content: center;
-      flex-shrink: 0;
+      width: 34px; height: 34px; background: rgba(192,57,43,0.18); border: none;
+      color: #e74c3c; border-radius: 10px; font-size: 20px;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
     }
     .btn-remove:active { background: rgba(192,57,43,0.35); }
 
-    /* ── App search / add ────────────────────────────────────────────────── */
     .app-search {
       border-top: 1px solid rgba(255,255,255,0.07);
-      padding: 12px 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      flex-shrink: 0;
-      max-height: 45vh;
+      padding: 14px 20px; display: flex; flex-direction: column; gap: 10px;
+      flex-shrink: 0; max-height: 45vh;
     }
-
     .app-search input {
-      width: 100%;
-      background: rgba(255,255,255,0.07);
-      border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 10px;
-      color: var(--text);
-      font-size: 15px;
-      padding: 10px 14px;
-      font-family: inherit;
+      width: 100%; background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.1); border-radius: 12px;
+      color: var(--text); font-size: 16px; padding: 12px 16px;
     }
     .app-search input:focus { border-color: var(--accent); }
 
-    .search-results {
-      overflow-y: auto;
-      -webkit-overflow-scrolling: touch;
-      display: flex;
-      flex-direction: column;
-    }
-
+    .search-results { overflow-y: auto; -webkit-overflow-scrolling: touch; display: flex; flex-direction: column; }
     .search-result-btn {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 10px 2px;
-      background: transparent;
-      border: none;
+      display: flex; align-items: center; gap: 14px; padding: 12px 2px;
+      background: transparent; border: none;
       border-bottom: 1px solid rgba(255,255,255,0.04);
-      color: var(--text);
-      font-size: 14px;
-      text-align: left;
-      width: 100%;
+      color: var(--text); font-size: 15px; text-align: left; width: 100%;
     }
-    .search-result-btn:active { opacity: 0.6; }
-    .search-result-btn:disabled { opacity: 0.45; }
-    .search-added { color: var(--accent); font-size: 11px; margin-left: auto; flex-shrink: 0; }
+    .search-result-btn:active  { opacity: 0.55; }
+    .search-result-btn:disabled { opacity: 0.4; }
+    .search-added { color: var(--accent); font-size: 12px; margin-left: auto; flex-shrink: 0; }
 
     /* ── YouTube popup ───────────────────────────────────────────────────── */
     #yt-overlay {
-      position: fixed; inset: 0; z-index: 200;
-      display: none; align-items: center; justify-content: center;
-      background: rgba(0,0,0,0.65);
+      position: fixed; inset: 0; z-index: 200; display: none;
+      align-items: flex-end; justify-content: center;
+      background: rgba(0,0,0,0.6);
+      padding-bottom: max(24px, env(safe-area-inset-bottom));
     }
     #yt-overlay.visible { display: flex; }
     #yt-popup {
-      background: #252525;
-      border: 1px solid rgba(255,255,255,0.12);
-      border-radius: 14px;
-      padding: 20px;
-      width: min(320px, 90vw);
-      display: flex; flex-direction: column; gap: 12px;
+      background: #252525; border-radius: 20px 20px 16px 16px;
+      padding: 24px 24px 20px;
+      width: min(480px, 100%); max-width: 100%;
+      display: flex; flex-direction: column; gap: 14px;
     }
-    #yt-popup h3 { font-size: 15px; font-weight: 600; }
+    #yt-popup h3 { font-size: 17px; font-weight: 600; }
     #yt-url-input {
-      height: 42px;
-      background: rgba(255,255,255,0.06);
-      border: 1px solid rgba(255,255,255,0.09);
-      border-bottom-color: rgba(255,255,255,0.45);
-      border-radius: 8px;
-      color: var(--text); font-family: inherit; font-size: 14px;
-      padding: 0 12px; width: 100%;
+      height: 46px; background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.1); border-bottom-color: rgba(255,255,255,0.4);
+      border-radius: 10px; color: var(--text); font-size: 16px; padding: 0 14px; width: 100%;
     }
     #yt-url-input:focus { border-bottom-color: var(--accent); outline: none; }
-    #yt-err { font-size: 12px; color: #f1665a; margin-top: -4px; }
-    .yt-actions { display: flex; gap: 8px; justify-content: flex-end; }
+    #yt-err { font-size: 13px; color: #f1665a; margin-top: -4px; }
+    .yt-actions { display: flex; gap: 10px; justify-content: flex-end; }
     .yt-actions button {
-      height: 38px; padding: 0 16px; border-radius: 8px;
-      font-family: inherit; font-size: 14px; border: none;
+      height: 44px; padding: 0 20px; border-radius: 12px;
+      font-size: 15px; border: none; font-family: inherit;
     }
     #yt-cancel-btn { background: rgba(255,255,255,0.09); color: var(--text); }
-    #yt-play-btn   { background: #0067c0; color: #fff; }
+    #yt-play-btn   { background: #0067c0; color: #fff; font-weight: 500; }
   </style>
 </head>
 <body>
 
   <div class="remote" id="remote">
 
+    <!-- Status + settings + source + power -->
     <div class="power-row">
       <div class="status-dot" id="status-dot"></div>
       <button class="btn-settings" id="btn-settings" onclick="toggleSettings()">⚙</button>
+      <span class="spacer"></span>
       <button class="btn-src" data-key="KEY_SOURCE" onclick="sendKey('KEY_SOURCE')">SRC</button>
       <button class="btn btn-power" data-key="KEY_POWER" onclick="sendKey('KEY_POWER')">⏻</button>
     </div>
 
+    <!-- Inline settings panel -->
     <div class="settings-panel" id="settings-panel" hidden>
-      <button class="btn btn-discover" id="discover-btn" onclick="discoverTvs()">Scan for TVs</button>
+      <button class="btn-discover" id="discover-btn" onclick="discoverTvs()">Scan for TVs</button>
       <div class="discover-results" id="discover-results"></div>
       <div class="ip-row">
         <input id="tvip" type="text" inputmode="text" placeholder="192.168.x.x"
@@ -494,19 +410,24 @@
       </div>
     </div>
 
+    <div class="divider"></div>
+
+    <!-- GUIDE / 123 / Apps -->
     <div class="row">
       <button class="btn btn-sm" data-key="KEY_GUIDE" onclick="sendKey('KEY_GUIDE')">GUIDE</button>
       <button class="btn btn-sm" data-key="KEY_123"   onclick="toggleNumpad()">123</button>
       <button class="btn btn-sm"                       onclick="openAppModal()">Apps</button>
     </div>
 
-    <div class="row">
-      <button class="btn btn-color btn-red"    data-key="KEY_RED"    onclick="sendKey('KEY_RED')"></button>
-      <button class="btn btn-color btn-green"  data-key="KEY_GREEN"  onclick="sendKey('KEY_GREEN')"></button>
-      <button class="btn btn-color btn-yellow" data-key="KEY_YELLOW" onclick="sendKey('KEY_YELLOW')"></button>
-      <button class="btn btn-color btn-blue"   data-key="KEY_BLUE"   onclick="sendKey('KEY_BLUE')"></button>
+    <!-- Colour buttons -->
+    <div class="color-row">
+      <button class="btn-color btn-red"    data-key="KEY_RED"    onclick="sendKey('KEY_RED')"></button>
+      <button class="btn-color btn-green"  data-key="KEY_GREEN"  onclick="sendKey('KEY_GREEN')"></button>
+      <button class="btn-color btn-yellow" data-key="KEY_YELLOW" onclick="sendKey('KEY_YELLOW')"></button>
+      <button class="btn-color btn-blue"   data-key="KEY_BLUE"   onclick="sendKey('KEY_BLUE')"></button>
     </div>
 
+    <!-- Numpad (hidden) -->
     <div class="numpad" id="numpad" hidden>
       <div class="numpad-row">
         <button class="btn-digit" data-key="KEY_1" onclick="sendKey('KEY_1')">1</button>
@@ -524,8 +445,12 @@
       </div>
     </div>
 
+    <!-- Pinned apps quick-launch -->
     <div class="pinned-apps" id="pinned-apps"></div>
 
+    <div class="divider"></div>
+
+    <!-- Navigation ring -->
     <div class="nav-ring">
       <div class="nav-track"></div>
       <button class="nav-dir nav-up"    data-key="KEY_UP"    onclick="sendKey('KEY_UP')">△</button>
@@ -535,24 +460,30 @@
       <button class="nav-ok"            data-key="KEY_ENTER" onclick="sendKey('KEY_ENTER')">OK</button>
     </div>
 
+    <!-- Back / Home / Play -->
     <div class="icon-row">
-      <button class="btn btn-icon" data-key="KEY_RETURN" onclick="sendKey('KEY_RETURN')" style="font-size:20px">↩</button>
-      <button class="btn btn-icon" data-key="KEY_HOME"   onclick="sendKey('KEY_HOME')"   style="font-size:20px">⌂</button>
-      <button class="btn btn-icon" data-key="KEY_PLAY"   onclick="sendKey('KEY_PLAY')"   style="font-size:20px">⏵</button>
+      <button class="btn btn-icon" data-key="KEY_RETURN" onclick="sendKey('KEY_RETURN')" style="font-size:clamp(18px,5vw,24px)">↩</button>
+      <button class="btn btn-icon" data-key="KEY_HOME"   onclick="sendKey('KEY_HOME')"   style="font-size:clamp(18px,5vw,24px)">⌂</button>
+      <button class="btn btn-icon" data-key="KEY_PLAY"   onclick="sendKey('KEY_PLAY')"   style="font-size:clamp(18px,5vw,24px)">⏵</button>
     </div>
 
+    <!-- Media transport -->
     <div class="icon-row">
       <button class="btn btn-icon" data-key="KEY_REWIND" onclick="sendKey('KEY_REWIND')">⏪</button>
       <button class="btn btn-icon" data-key="KEY_STOP"   onclick="sendKey('KEY_STOP')">⏹</button>
       <button class="btn btn-icon" data-key="KEY_FF"     onclick="sendKey('KEY_FF')">⏩</button>
     </div>
 
+    <!-- Exit / Info / CC -->
     <div class="icon-row">
-      <button class="btn btn-icon" data-key="KEY_EXIT"    onclick="sendKey('KEY_EXIT')"    style="font-size:12px;font-weight:700;letter-spacing:.5px">EXIT</button>
-      <button class="btn btn-icon" data-key="KEY_INFO"    onclick="sendKey('KEY_INFO')"    style="font-size:20px">ⓘ</button>
-      <button class="btn btn-icon" data-key="KEY_CAPTION" onclick="sendKey('KEY_CAPTION')" style="font-size:13px;font-weight:700">CC</button>
+      <button class="btn btn-icon" data-key="KEY_EXIT"    onclick="sendKey('KEY_EXIT')"    style="font-size:clamp(11px,3vw,14px);font-weight:700;letter-spacing:.5px">EXIT</button>
+      <button class="btn btn-icon" data-key="KEY_INFO"    onclick="sendKey('KEY_INFO')"    style="font-size:clamp(18px,5vw,24px)">ⓘ</button>
+      <button class="btn btn-icon" data-key="KEY_CAPTION" onclick="sendKey('KEY_CAPTION')" style="font-size:clamp(12px,3.5vw,16px);font-weight:700">CC</button>
     </div>
 
+    <div class="divider"></div>
+
+    <!-- Volume / Mute / Channel -->
     <div class="rockers">
       <div class="rocker">
         <span class="rocker-label">VOL</span>
@@ -561,7 +492,7 @@
       </div>
       <div class="rocker rocker-mute">
         <span class="rocker-label">MUTE</span>
-        <button class="btn btn-icon" data-key="KEY_MUTE" onclick="sendKey('KEY_MUTE')">🔇</button>
+        <button class="btn btn-mute" data-key="KEY_MUTE" onclick="sendKey('KEY_MUTE')">🔇</button>
       </div>
       <div class="rocker">
         <span class="rocker-label">CH</span>
@@ -587,7 +518,7 @@
     </div>
   </div>
 
-  <!-- YouTube deep-link popup -->
+  <!-- YouTube deep-link popup (slides up from bottom) -->
   <div id="yt-overlay">
     <div id="yt-popup">
       <h3>Play YouTube video</h3>

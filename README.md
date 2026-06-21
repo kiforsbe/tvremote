@@ -1,5 +1,9 @@
 # TV Remote
 
+<p align="center">
+  <img src="docs/screenshot.png" width="200" alt="TV Remote screenshot">
+</p>
+
 A Samsung smart TV remote control for Windows and iPhone, built with Electron and served as a PWA.
 
 - **Windows app** — frameless, transparent overlay; sits in the corner of your screen. Draggable, always on top optional.

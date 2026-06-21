@@ -206,7 +206,7 @@ ipcMain.on('set-ignore-mouse-events', (event, ignore) => {
   if (w) w.setIgnoreMouseEvents(ignore, { forward: true });
 });
 
-ipcMain.handle('open-app-manager', (event, appsJson) => {
+ipcMain.handle('open-app-manager', (event, appsJson, ip) => {
   const mainWin = BrowserWindow.fromWebContents(event.sender);
   return new Promise(resolve => {
     const dlg = new BrowserWindow({
@@ -228,7 +228,7 @@ ipcMain.handle('open-app-manager', (event, appsJson) => {
 
     dlg.loadFile(
       path.join(__dirname, 'app', 'app-manager.html'),
-      { query: { apps: appsJson } }
+      { query: { apps: appsJson, ip: ip || '' } }
     );
 
     const onSave   = (_, json) => { cleanup(); resolve(json);  dlg.close(); };
@@ -242,6 +242,36 @@ ipcMain.handle('open-app-manager', (event, appsJson) => {
     ipcMain.once('app-manager-save',   onSave);
     ipcMain.once('app-manager-cancel', onCancel);
     dlg.on('closed', () => { cleanup(); resolve(null); });
+  });
+});
+
+ipcMain.handle('fetch-tv-apps', (_event, ip) => {
+  return new Promise(resolve => {
+    const req = http.get({
+      hostname: ip,
+      port:     8001,
+      path:     '/api/v2/applications',
+      timeout:  5000,
+    }, res => {
+      let data = '';
+      res.on('data', chunk => { data += chunk; });
+      res.on('end', () => {
+        try {
+          const json = JSON.parse(data);
+          const list = Array.isArray(json) ? json
+                     : Array.isArray(json.data) ? json.data
+                     : [];
+          const apps = list
+            .map(a => ({ appId: a.appId || a.AppID || a.id || '', name: a.name || a.Name || '' }))
+            .filter(a => a.appId);
+          resolve({ apps });
+        } catch (e) {
+          resolve({ error: 'Parse error: ' + e.message });
+        }
+      });
+    });
+    req.on('timeout', () => { req.destroy(); resolve({ error: 'Timeout' }); });
+    req.on('error',   err => resolve({ error: err.message }));
   });
 });
 

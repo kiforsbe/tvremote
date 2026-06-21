@@ -119,10 +119,32 @@
     .app-row.dragging         { opacity: 0.4; }
     .app-row.drag-over-top    { box-shadow: 0 -2px 0 0 #60cdff; }
     .app-row.drag-over-bottom { box-shadow: 0  2px 0 0 #60cdff; }
+
+    /* ── Sync with TV ───────────────────────────── */
+    .dialog-header { display: flex; align-items: center; justify-content: space-between; }
+    .btn-sync {
+      height: 24px; padding: 0 10px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.09);
+      border-radius: 4px;
+      color: rgba(255,255,255,0.7);
+      font-family: inherit; font-size: 12px;
+      cursor: pointer; flex-shrink: 0;
+    }
+    .btn-sync:hover:not(:disabled) { background: rgba(255,255,255,0.1); }
+    .btn-sync:disabled { opacity: 0.4; cursor: default; }
+    .app-row.unavailable { opacity: 0.4; }
+    .app-row.unavailable .app-row-name::after {
+      content: ' — not on TV';
+      font-size: 10px;
+    }
   </style>
 </head>
 <body>
-  <h1>Manage Apps</h1>
+  <div class="dialog-header">
+    <h1>Manage Apps</h1>
+    <button class="btn-sync" id="btn-sync">Sync with TV</button>
+  </div>
 
   <div class="app-list" id="app-list"></div>
 
@@ -162,6 +184,8 @@
 
     // enabledApps: ordered array of currently enabled apps (passed from remote)
     let enabledApps = JSON.parse(new URLSearchParams(location.search).get('apps') || '[]');
+    const ip = new URLSearchParams(location.search).get('ip') || '';
+    let tvAppIds = null; // null = not synced; Set<string> after sync
 
     // Merge: build a master list = enabled apps (in order) + disabled catalog apps + custom disabled
     function buildRows() {
@@ -183,6 +207,9 @@
       rows.forEach((app, i) => {
         const rowEl = document.createElement('div');
         rowEl.className = 'app-row';
+        if (tvAppIds !== null && !app.custom && !tvAppIds.has(app.appId)) {
+          rowEl.classList.add('unavailable');
+        }
 
         if (app.enabled) {
           rowEl.draggable = true;
@@ -217,6 +244,25 @@
     }
 
     render();
+
+    // Sync with TV
+    (function () {
+      const btn = document.getElementById('btn-sync');
+      if (!ip) { btn.disabled = true; btn.title = 'No TV IP configured'; return; }
+      btn.onclick = async () => {
+        btn.disabled = true;
+        btn.textContent = 'Syncing…';
+        const result = await window.appManagerAPI.fetchTvApps(ip).catch(e => ({ error: e.message }));
+        if (result.error) {
+          btn.textContent = 'Failed';
+        } else {
+          tvAppIds = new Set(result.apps.map(a => a.appId));
+          btn.textContent = `Synced · ${result.apps.length} apps`;
+          render();
+        }
+        setTimeout(() => { btn.textContent = 'Sync with TV'; btn.disabled = !ip; }, 2500);
+      };
+    })();
 
     // Drag-and-drop (delegated to #app-list — survives re-renders)
     (function () {

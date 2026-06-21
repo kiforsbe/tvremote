@@ -424,7 +424,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   manageBtn.addEventListener('click', () => {
     if (!window.electronAPI?.openAppManager) return;
-    window.electronAPI.openAppManager(JSON.stringify(_mediaApps)).then(result => {
+    window.electronAPI.openAppManager(JSON.stringify(_mediaApps), getIp()).then(result => {
       if (result) setMediaApps(JSON.parse(result));
     });
   });

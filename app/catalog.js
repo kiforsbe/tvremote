@@ -31,7 +31,7 @@ const APP_CATALOG = [
   { id: 'youtube',    name: 'YouTube',      icon: '▶',  deepLink: true,  available: [],
     appIds: { default: '111299001912' } },
   { id: 'netflix',    name: 'Netflix',      icon: 'N',                   available: [],
-    appIds: { default: '11101200001' } },
+    appIds: { default: '11101200001', UK: '3201907018807', NORDIC: '3201907018807', DE: '3201907018807', EU: '3201907018807', AU: '3201907018807' } },
   { id: 'prime',      name: 'Prime Video',  icon: '📦',                  available: [],
     appIds: { default: '3201910019365' } },
   { id: 'disney',     name: 'Disney+',      icon: '🏰',                  available: [],

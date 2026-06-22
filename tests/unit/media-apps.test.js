@@ -18,7 +18,7 @@ describe('MEDIA_APPS_CATALOG', () => {
     const yt = MEDIA_APPS_CATALOG.find(a => a.id === 'youtube');
     expect(yt).toBeDefined();
     expect(yt.deepLink).toBe(true);
-    expect(yt.appId).toBe('111299001912');
+    expect(yt.appIds.default).toBe('111299001912');
   });
 
   test('every entry has required string/boolean fields', () => {
@@ -26,8 +26,8 @@ describe('MEDIA_APPS_CATALOG', () => {
       expect(typeof app.id).toBe('string');
       expect(typeof app.name).toBe('string');
       expect(typeof app.icon).toBe('string');
-      expect(typeof app.appId).toBe('string');
-      expect(typeof app.deepLink).toBe('boolean');
+      expect(typeof app.appIds.default).toBe('string');
+      expect(app.deepLink == null || typeof app.deepLink === 'boolean').toBe(true);
     }
   });
 });
@@ -35,9 +35,9 @@ describe('MEDIA_APPS_CATALOG', () => {
 describe('loadMediaApps', () => {
   beforeEach(() => localStorage.clear());
 
-  test('returns first 3 catalog items when localStorage is empty', () => {
+  test('returns US region defaults when localStorage is empty', () => {
     const apps = loadMediaApps();
-    expect(apps).toHaveLength(3);
+    expect(apps).toHaveLength(14);
     expect(apps[0].id).toBe('youtube');
     expect(apps[1].id).toBe('netflix');
     expect(apps[2].id).toBe('prime');
@@ -51,7 +51,7 @@ describe('loadMediaApps', () => {
 
   test('falls back to defaults on invalid JSON', () => {
     localStorage.setItem('mediaApps', 'not-json{{{');
-    expect(loadMediaApps()).toHaveLength(3);
+    expect(loadMediaApps()).toHaveLength(14);
   });
 });
 

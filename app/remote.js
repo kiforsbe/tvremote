@@ -460,10 +460,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Exported for Jest — browser ignores this (module is undefined)
 if (typeof module !== 'undefined' && module.exports) {
+  const { APP_CATALOG, REGION_DEFAULTS } = require('./catalog.js');
+  global.APP_CATALOG = APP_CATALOG;
+  global.REGION_DEFAULTS = REGION_DEFAULTS;
   module.exports = {
     KEY_MAP,
     buildKeyCommand,
-    MEDIA_APPS_CATALOG,
+    MEDIA_APPS_CATALOG: APP_CATALOG,
     loadMediaApps,
     saveMediaApps,
     parseYouTubeVideoId,

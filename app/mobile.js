@@ -235,10 +235,14 @@ function renderPinnedApps() {
     btn.className = 'btn btn-icon pinned-app-btn';
     btn.title     = app.name;
     btn.textContent = app.icon;
-    btn.onclick = () => {
-      if (app.deepLink) showYouTubeDialog(app.appId);
-      else launchApp(app.appId);
-    };
+    if (app.deepLink) {
+      attachLongPress(btn,
+        () => launchApp(app.appId),
+        () => showYouTubeDialog(app.appId)
+      );
+    } else {
+      btn.onclick = () => launchApp(app.appId);
+    }
     container.appendChild(btn);
   }
 }
@@ -309,10 +313,14 @@ function renderAppList() {
     launchBtn.className = 'app-row-launch';
     launchBtn.innerHTML = `<span class="app-row-icon">${app.icon}</span><span class="app-row-name">${app.name}</span>`;
     if (!_editMode) {
-      launchBtn.onclick = () => {
-        if (app.deepLink) { closeAppModal(); showYouTubeDialog(app.appId); }
-        else { launchApp(app.appId); closeAppModal(); }
-      };
+      if (app.deepLink) {
+        attachLongPress(launchBtn,
+          () => { closeAppModal(); launchApp(app.appId); },
+          () => { closeAppModal(); showYouTubeDialog(app.appId); }
+        );
+      } else {
+        launchBtn.onclick = () => { launchApp(app.appId); closeAppModal(); };
+      }
     }
     row.appendChild(launchBtn);
 
@@ -429,6 +437,34 @@ function showYouTubeDialog(appId) {
   };
 }
 
+// ── Long-press helper ─────────────────────────────────────────────────────────
+
+function attachLongPress(btn, onTap, onLong) {
+  let timer = null;
+  btn.addEventListener('pointerdown', e => {
+    e.preventDefault();
+    if (btn.setPointerCapture) btn.setPointerCapture(e.pointerId);
+    btn.classList.add('pressing');
+    timer = setTimeout(() => {
+      timer = null;
+      btn.classList.remove('pressing');
+      onLong();
+    }, 500);
+  });
+  btn.addEventListener('pointerup', () => {
+    if (timer) {
+      clearTimeout(timer);
+      timer = null;
+      btn.classList.remove('pressing');
+      onTap();
+    }
+  });
+  btn.addEventListener('pointercancel', () => {
+    if (timer) { clearTimeout(timer); timer = null; }
+    btn.classList.remove('pressing');
+  });
+}
+
 // ── Init ──────────────────────────────────────────────────────────────────────
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -476,3 +512,13 @@ document.addEventListener('DOMContentLoaded', () => {
     if (key) { e.preventDefault(); sendKey(key); }
   });
 });
+
+// Exported for Jest — browser ignores this (module is undefined)
+if (typeof module !== 'undefined' && module.exports) {
+  const { APP_CATALOG, REGION_DEFAULTS, CC_TO_REGION, REGIONS } = require('./catalog.js');
+  global.APP_CATALOG     = APP_CATALOG;
+  global.REGION_DEFAULTS = REGION_DEFAULTS;
+  global.CC_TO_REGION    = CC_TO_REGION;
+  global.REGIONS         = REGIONS;
+  module.exports = { attachLongPress };
+}

@@ -209,6 +209,11 @@
       height: clamp(58px, 18vw, 72px);
       border-radius: 50%; font-size: clamp(20px, 6vw, 28px);
     }
+    .btn.pressing, .app-row-launch.pressing {
+      opacity: 0.6;
+      transform: scale(0.94);
+      transition: opacity 0.1s, transform 0.1s;
+    }
 
     /* ── Navigation ring ─────────────────────────────────────────────────── */
     .nav-ring {

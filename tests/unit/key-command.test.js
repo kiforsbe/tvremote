@@ -90,7 +90,7 @@ describe('buildInputEndCommand', () => {
 
 describe('buildPointerCommand', () => {
   const { buildPointerCommand } = require('../../app/remote.js');
-  test('Move carries a rounded absolute position', () => {
+  test('Move carries rounded x/y deltas', () => {
     const { params } = JSON.parse(buildPointerCommand('Move', 100.6, 200.2));
     expect(params.TypeOfRemote).toBe('ProcessMouseDevice');
     expect(params.Cmd).toBe('Move');

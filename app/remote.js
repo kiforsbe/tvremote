@@ -119,7 +119,7 @@ function buildInputEndCommand() {
   });
 }
 
-// cmd: 'Move' (needs x/y, absolute TV-screen coords), 'LeftClick' or 'RightClick'.
+// cmd: 'Move' (x/y are relative movement: the TV treats them as a delta), 'LeftClick' or 'RightClick'.
 function buildPointerCommand(cmd, x, y) {
   const params = { Cmd: cmd, TypeOfRemote: 'ProcessMouseDevice' };
   if (cmd === 'Move') params.Position = { x: Math.round(x), y: Math.round(y), Time: String(Date.now()) };

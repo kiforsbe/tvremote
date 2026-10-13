@@ -296,6 +296,24 @@ function closeDrawer() {
   document.getElementById('drawer-tab').textContent = '‹';
 }
 
+// The window is click-through outside the remote body; while a popup is open
+// the whole window must be interactive.
+let _overlayOpen = false;
+
+function sendInteractiveBounds() {
+  const el = document.getElementById('remote-container');
+  if (!el) return;
+  const r = _overlayOpen
+    ? { left: 0, top: 0, right: window.innerWidth, bottom: window.innerHeight }
+    : el.getBoundingClientRect();
+  window.electronAPI?.setInteractiveBounds({ left: r.left, top: r.top, right: r.right, bottom: r.bottom });
+}
+
+function setOverlayOpen(on) {
+  _overlayOpen = on;
+  sendInteractiveBounds();
+}
+
 function showYouTubeDialog(appId) {
   const overlay   = document.getElementById('yt-overlay');
   const input     = document.getElementById('yt-url-input');
@@ -306,6 +324,7 @@ function showYouTubeDialog(appId) {
   input.value  = '';
   errEl.hidden = true;
   overlay.classList.add('visible');
+  setOverlayOpen(true);
   setTimeout(() => input.focus(), 40);
 
   function submit() {
@@ -317,6 +336,7 @@ function showYouTubeDialog(appId) {
 
   function close() {
     overlay.classList.remove('visible');
+    setOverlayOpen(false);
     playBtn.onclick   = null;
     cancelBtn.onclick = null;
     input.onkeydown   = null;
@@ -373,6 +393,7 @@ function showTextDialog() {
   }
 
   overlay.classList.add('visible');
+  setOverlayOpen(true);
   setMode(mode);
   setTimeout(() => input.focus(), 40);
 
@@ -383,6 +404,7 @@ function showTextDialog() {
 
   function close() {
     overlay.classList.remove('visible');
+    setOverlayOpen(false);
     sendBtn.onclick   = null;
     cancelBtn.onclick = null;
     input.onkeydown   = null;
@@ -489,12 +511,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Report container bounds to main process so the poller can call
   // setIgnoreMouseEvents synchronously without an IPC round-trip on mousedown.
-  function _sendBounds() {
-    const r = _containerEl.getBoundingClientRect();
-    window.electronAPI?.setInteractiveBounds({ left: r.left, top: r.top, right: r.right, bottom: r.bottom });
-  }
-  _sendBounds();
-  new ResizeObserver(_sendBounds).observe(_containerEl);
+  sendInteractiveBounds();
+  new ResizeObserver(sendInteractiveBounds).observe(_containerEl);
 
   // Drawer auto-close: hide when cursor leaves the interactive area.
   let _closeTimer = null;

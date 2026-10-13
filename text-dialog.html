@@ -67,9 +67,9 @@
     const hint      = document.getElementById('hint');
     const modeBtns  = document.querySelectorAll('[data-mode]');
 
-    // Live mode: arrows/Enter act as remote keys; everything else is typed text.
+    // Live mode: arrows act as remote keys, Enter accepts the entry; everything else is typed text.
     const LIVE_NAV_KEYS = {
-      Enter: 'KEY_ENTER', ArrowUp: 'KEY_UP', ArrowDown: 'KEY_DOWN',
+      ArrowUp: 'KEY_UP', ArrowDown: 'KEY_DOWN',
       ArrowLeft: 'KEY_LEFT', ArrowRight: 'KEY_RIGHT',
     };
 
@@ -83,7 +83,7 @@
       sendBtn.hidden = m === 'live';
       cancelBtn.textContent = m === 'live' ? 'Done' : 'Cancel';
       hint.textContent = m === 'live'
-        ? 'The field is mirrored to the TV as you type. Arrows/Enter act as remote keys.'
+        ? 'The field is mirrored to the TV as you type. Enter accepts; arrows act as remote keys.'
         : 'Edit freely, then Send to type the whole string on the TV.';
       input.value = '';
       input.focus();
@@ -91,6 +91,7 @@
 
     function submit() {
       if (input.value) api.sendText(input.value);
+      api.end();
       api.close();
     }
 
@@ -104,11 +105,11 @@
         if (e.key === 'Enter') { e.preventDefault(); submit(); }
         return;
       }
+      if (e.key === 'Enter') { e.preventDefault(); api.end(); input.value = ''; return; }
       const nav = LIVE_NAV_KEYS[e.key];
       if (nav) {
         e.preventDefault();
         api.sendKey(nav);
-        if (e.key === 'Enter') input.value = '';
       }
     };
     // Live mode mirrors the whole field to the TV on every change.

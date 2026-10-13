@@ -33,6 +33,13 @@ function buildTextCommand(text) {
   });
 }
 
+function buildInputEndCommand() {
+  return JSON.stringify({
+    method: 'ms.remote.control',
+    params: { Cmd: '', DataOfCmd: '', TypeOfRemote: 'SendInputEnd' },
+  });
+}
+
 function parseYouTubeVideoId(input) {
   if (!input) return null;
   input = input.trim();
@@ -225,15 +232,22 @@ async function discoverTvs() {
 
 // ── Numpad ────────────────────────────────────────────────────────────────────
 
-// Live mode: arrows/Enter go as remote keys; everything else is typed text.
+// Live mode: arrows go as remote keys, Enter accepts the entry; everything else is typed text.
 const LIVE_NAV_KEYS = {
-  Enter: 'KEY_ENTER', ArrowUp: 'KEY_UP', ArrowDown: 'KEY_DOWN',
+  ArrowUp: 'KEY_UP', ArrowDown: 'KEY_DOWN',
   ArrowLeft: 'KEY_LEFT', ArrowRight: 'KEY_RIGHT',
 };
 
 function sendText(text, allowEmpty = false) {
   if ((!text && !allowEmpty) || !ws || ws.readyState !== WebSocket.OPEN) return;
   ws.send(buildTextCommand(text));
+}
+
+// Accepts the current text-field entry on the TV (not a remote key press, so
+// it does not activate the focused on-screen-keyboard key).
+function sendInputEnd() {
+  if (!ws || ws.readyState !== WebSocket.OPEN) return;
+  ws.send(buildInputEndCommand());
 }
 
 function showTextDialog() {
@@ -254,7 +268,7 @@ function showTextDialog() {
     sendBtn.hidden = m === 'live';
     cancelBtn.textContent = m === 'live' ? 'Done' : 'Cancel';
     hint.textContent = m === 'live'
-      ? 'The field is mirrored to the TV as you type. Arrows/Enter act as remote keys.'
+      ? 'The field is mirrored to the TV as you type. Enter accepts; arrows act as remote keys.'
       : 'Edit freely, then Send to type the whole string on the TV.';
     input.value = '';
     input.focus();
@@ -266,6 +280,7 @@ function showTextDialog() {
 
   function submit() {
     sendText(input.value);
+    sendInputEnd();
     close();
   }
 
@@ -287,11 +302,11 @@ function showTextDialog() {
       if (e.key === 'Enter') { e.preventDefault(); submit(); }
       return;
     }
+    if (e.key === 'Enter') { e.preventDefault(); sendInputEnd(); input.value = ''; return; }
     const nav = LIVE_NAV_KEYS[e.key];
     if (nav) {
       e.preventDefault();
       sendKey(nav);
-      if (e.key === 'Enter') input.value = '';
     }
   };
   // Live mode mirrors the whole field to the TV on every change (soft
@@ -604,5 +619,5 @@ if (typeof module !== 'undefined' && module.exports) {
   global.REGION_DEFAULTS = REGION_DEFAULTS;
   global.CC_TO_REGION    = CC_TO_REGION;
   global.REGIONS         = REGIONS;
-  module.exports = { attachLongPress, buildTextCommand };
+  module.exports = { attachLongPress, buildTextCommand, buildInputEndCommand };
 }

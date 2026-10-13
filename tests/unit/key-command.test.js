@@ -80,3 +80,10 @@ describe('buildTextCommand', () => {
     expect(Buffer.from(params.Cmd, 'base64').toString('utf8')).toBe('åäö');
   });
 });
+
+describe('buildInputEndCommand', () => {
+  const { buildInputEndCommand } = require('../../app/remote.js');
+  test('is a SendInputEnd control message', () => {
+    expect(JSON.parse(buildInputEndCommand()).params.TypeOfRemote).toBe('SendInputEnd');
+  });
+});

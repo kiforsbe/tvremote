@@ -112,6 +112,13 @@ function buildTextCommand(text) {
   });
 }
 
+function buildInputEndCommand() {
+  return JSON.stringify({
+    method: 'ms.remote.control',
+    params: { Cmd: '', DataOfCmd: '', TypeOfRemote: 'SendInputEnd' },
+  });
+}
+
 let ws = null;
 
 function setStatus(state) {
@@ -361,6 +368,13 @@ function sendText(text, allowEmpty = false) {
   ws.send(buildTextCommand(text));
 }
 
+// Accepts the current text-field entry on the TV (not a remote key press, so
+// it does not activate the focused on-screen-keyboard key).
+function sendInputEnd() {
+  if (!ws || ws.readyState !== WebSocket.OPEN) return;
+  ws.send(buildInputEndCommand());
+}
+
 function toggleNumpad() {
   const panel = document.getElementById('numpad');
   if (!panel) return;
@@ -502,6 +516,7 @@ if (typeof module !== 'undefined' && module.exports) {
     KEY_MAP,
     buildKeyCommand,
     buildTextCommand,
+    buildInputEndCommand,
     MEDIA_APPS_CATALOG: APP_CATALOG,
     loadMediaApps,
     saveMediaApps,

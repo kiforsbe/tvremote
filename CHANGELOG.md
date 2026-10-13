@@ -9,6 +9,8 @@ cut with `npm run release` (see DEVELOPMENT.md), which turns that section into a
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-10-13
+
 ### Added
 - **Aa** button opening a "Type on TV" window with two modes:
   - *Live keys*: type directly (no field to focus); the buffer is mirrored to the TV, Enter accepts the entry, arrows act as remote keys.
@@ -27,5 +29,6 @@ Initial feature set (built and used locally; first tagged as part of the release
 - Mobile UI for iPhone/browser, served by the desktop app (proxying the TV WebSocket and REST calls), installable as a PWA.
 - Windows installer and portable builds via electron-builder, and a manual GitHub Actions release workflow.
 
-[Unreleased]: https://github.com/kiforsbe/tvremote/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/kiforsbe/tvremote/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/kiforsbe/tvremote/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/kiforsbe/tvremote/releases/tag/v1.0.0

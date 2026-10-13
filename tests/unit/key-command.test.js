@@ -87,3 +87,18 @@ describe('buildInputEndCommand', () => {
     expect(JSON.parse(buildInputEndCommand()).params.TypeOfRemote).toBe('SendInputEnd');
   });
 });
+
+describe('buildPointerCommand', () => {
+  const { buildPointerCommand } = require('../../app/remote.js');
+  test('Move carries a rounded absolute position', () => {
+    const { params } = JSON.parse(buildPointerCommand('Move', 100.6, 200.2));
+    expect(params.TypeOfRemote).toBe('ProcessMouseDevice');
+    expect(params.Cmd).toBe('Move');
+    expect(params.Position).toMatchObject({ x: 101, y: 200 });
+    expect(typeof params.Position.Time).toBe('string');
+  });
+  test('clicks have no position', () => {
+    const { params } = JSON.parse(buildPointerCommand('LeftClick'));
+    expect(params).toEqual({ Cmd: 'LeftClick', TypeOfRemote: 'ProcessMouseDevice' });
+  });
+});

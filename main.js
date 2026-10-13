@@ -287,7 +287,7 @@ ipcMain.handle('open-ip-dialog', (event, currentIp) => {
 
 ipcMain.handle('open-text-dialog', event => {
   const parentWin = BrowserWindow.fromWebContents(event.sender);
-  const W = 320, H = 210;
+  const W = 320, H = 320;
   // Center on the remote body (interactive bounds), falling back to the window.
   const [wx, wy] = parentWin.getPosition();
   const b = _interactiveBounds;
@@ -311,16 +311,23 @@ ipcMain.handle('open-text-dialog', event => {
   const mine   = e => e.sender === dlg.webContents;
   const onText  = (e, text) => { if (mine(e)) run(`sendText(${JSON.stringify(String(text))}, true)`); };
   const onKey   = (e, key)  => { if (mine(e)) run(`sendKey(${JSON.stringify(String(key))})`); };
+  const onPtr   = (e, cmd, x, y) => {
+    if (mine(e) && ['Move', 'LeftClick', 'RightClick'].includes(cmd)) {
+      run(`sendPointer(${JSON.stringify(cmd)}, ${Number(x) || 0}, ${Number(y) || 0})`);
+    }
+  };
   const onEnd   = e         => { if (mine(e)) run('sendInputEnd()'); };
   const onClose = e         => { if (mine(e)) dlg.close(); };
 
   ipcMain.on('text-dialog-send-text', onText);
   ipcMain.on('text-dialog-send-key',  onKey);
+  ipcMain.on('text-dialog-pointer',   onPtr);
   ipcMain.on('text-dialog-end',       onEnd);
   ipcMain.on('text-dialog-close',     onClose);
   dlg.on('closed', () => {
     ipcMain.removeListener('text-dialog-send-text', onText);
     ipcMain.removeListener('text-dialog-send-key',  onKey);
+    ipcMain.removeListener('text-dialog-pointer',   onPtr);
     ipcMain.removeListener('text-dialog-end',       onEnd);
     ipcMain.removeListener('text-dialog-close',     onClose);
   });

@@ -43,6 +43,14 @@
     #send-btn { background: #0067c0; color: #fff; }
     #send-btn:hover { background: #1975c9; }
     #send-btn[hidden] { display: none; }
+    #pad {
+      flex: 1; border-radius: 6px; cursor: crosshair; touch-action: none;
+      background: rgba(255,255,255,0.05); border: 1px dashed rgba(255,255,255,0.2);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; color: rgba(255,255,255,0.4); -webkit-app-region: no-drag;
+    }
+    #pad:active { background: rgba(255,255,255,0.09); }
+    [hidden] { display: none !important; }
   </style>
 </head>
 <body>
@@ -50,10 +58,12 @@
   <div class="modes">
     <button data-mode="live">Live keys</button>
     <button data-mode="text">Text</button>
+    <button data-mode="pointer">Pointer</button>
   </div>
   <div id="hint"></div>
   <input type="text" id="txt-input" placeholder="Focus a text field on the TV first"
          autocomplete="off" spellcheck="false">
+  <div id="pad" hidden>trackpad</div>
   <div class="actions">
     <button id="cancel-btn">Cancel</button>
     <button id="send-btn">Send</button>
@@ -73,20 +83,25 @@
       ArrowLeft: 'KEY_LEFT', ArrowRight: 'KEY_RIGHT',
     };
 
+    const pad = document.getElementById('pad');
     let mode = 'text';
-    try { mode = localStorage.getItem('txtmode') === 'live' ? 'live' : 'text'; } catch (_) {}
+    try { const m = localStorage.getItem('txtmode'); if (['live', 'pointer'].includes(m)) mode = m; } catch (_) {}
 
     function setMode(m) {
       mode = m;
       try { localStorage.setItem('txtmode', m); } catch (_) {}
       modeBtns.forEach(b => b.classList.toggle('active', b.dataset.mode === m));
-      sendBtn.hidden = m === 'live';
-      cancelBtn.textContent = m === 'live' ? 'Done' : 'Cancel';
-      hint.textContent = m === 'live'
-        ? 'The field is mirrored to the TV as you type. Enter accepts; arrows act as remote keys.'
-        : 'Edit freely, then Send to type the whole string on the TV.';
+      sendBtn.hidden = m !== 'text';
+      input.hidden   = m === 'pointer';
+      pad.hidden     = m !== 'pointer';
+      cancelBtn.textContent = m === 'text' ? 'Cancel' : 'Done';
+      hint.textContent = {
+        live:    'The field is mirrored to the TV as you type. Enter accepts; arrows act as remote keys.',
+        text:    'Edit freely, then Send to type the whole string on the TV.',
+        pointer: 'Drag to move the TV cursor, tap to left-click, right-click to right-click.',
+      }[m];
       input.value = '';
-      input.focus();
+      if (m !== 'pointer') input.focus();
     }
 
     function submit() {
@@ -114,6 +129,37 @@
     };
     // Live mode mirrors the whole field to the TV on every change.
     input.oninput = () => { if (mode === 'live') api.sendText(input.value); };
+
+    // ── Pointer mode: trackpad → absolute TV-screen coordinates ────────────
+    const TV_W = 1920, TV_H = 1080, SPEED = 3;
+    let cx = TV_W / 2, cy = TV_H / 2;
+    let last = null, moved = 0, downAt = 0, lastSent = 0;
+
+    pad.onpointerdown = e => {
+      if (e.button !== 0) return;
+      pad.setPointerCapture(e.pointerId);
+      last = { x: e.clientX, y: e.clientY };
+      moved = 0;
+      downAt = Date.now();
+    };
+    pad.onpointermove = e => {
+      if (!last) return;
+      const dx = e.clientX - last.x, dy = e.clientY - last.y;
+      last = { x: e.clientX, y: e.clientY };
+      moved += Math.abs(dx) + Math.abs(dy);
+      cx = Math.max(0, Math.min(TV_W, cx + dx * SPEED));
+      cy = Math.max(0, Math.min(TV_H, cy + dy * SPEED));
+      const now = Date.now();
+      if (now - lastSent >= 30) { lastSent = now; api.pointer('Move', cx, cy); }
+    };
+    pad.onpointerup = () => {
+      if (!last) return;
+      last = null;
+      api.pointer('Move', cx, cy); // flush final position
+      if (moved < 6 && Date.now() - downAt < 400) api.pointer('LeftClick');
+    };
+    pad.oncontextmenu = e => { e.preventDefault(); api.pointer('RightClick'); };
+    window.addEventListener('keydown', e => { if (e.key === 'Escape') api.close(); });
 
     setMode(mode);
   </script>

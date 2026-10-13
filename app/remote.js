@@ -119,6 +119,13 @@ function buildInputEndCommand() {
   });
 }
 
+// cmd: 'Move' (needs x/y, absolute TV-screen coords), 'LeftClick' or 'RightClick'.
+function buildPointerCommand(cmd, x, y) {
+  const params = { Cmd: cmd, TypeOfRemote: 'ProcessMouseDevice' };
+  if (cmd === 'Move') params.Position = { x: Math.round(x), y: Math.round(y), Time: String(Date.now()) };
+  return JSON.stringify({ method: 'ms.remote.control', params });
+}
+
 let ws = null;
 
 function setStatus(state) {
@@ -375,6 +382,11 @@ function sendInputEnd() {
   ws.send(buildInputEndCommand());
 }
 
+function sendPointer(cmd, x, y) {
+  if (!ws || ws.readyState !== WebSocket.OPEN) return;
+  ws.send(buildPointerCommand(cmd, x, y));
+}
+
 function toggleNumpad() {
   const panel = document.getElementById('numpad');
   if (!panel) return;
@@ -517,6 +529,7 @@ if (typeof module !== 'undefined' && module.exports) {
     buildKeyCommand,
     buildTextCommand,
     buildInputEndCommand,
+    buildPointerCommand,
     MEDIA_APPS_CATALOG: APP_CATALOG,
     loadMediaApps,
     saveMediaApps,

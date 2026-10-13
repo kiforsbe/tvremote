@@ -64,3 +64,19 @@ describe('KEY_MAP', () => {
     expect(KEY_MAP['m']).toBe('KEY_MENU');
   });
 });
+
+describe('buildTextCommand', () => {
+  const { buildTextCommand } = require('../../app/remote.js');
+
+  test('base64-encodes text as a SendInputString command', () => {
+    expect(JSON.parse(buildTextCommand('hello'))).toEqual({
+      method: 'ms.remote.control',
+      params: { Cmd: 'aGVsbG8=', DataOfCmd: 'base64', TypeOfRemote: 'SendInputString' },
+    });
+  });
+
+  test('encodes non-ASCII text as UTF-8', () => {
+    const { params } = JSON.parse(buildTextCommand('åäö'));
+    expect(Buffer.from(params.Cmd, 'base64').toString('utf8')).toBe('åäö');
+  });
+});

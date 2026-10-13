@@ -532,7 +532,7 @@
     }
 
     /* ── YouTube URL popup ──────────────────────── */
-    #yt-overlay {
+    #yt-overlay, #txt-overlay {
       position: fixed;
       inset: 0;
       z-index: 1000;
@@ -542,9 +542,9 @@
       -webkit-app-region: no-drag;
       font-family: 'Segoe UI Variable Text', 'Segoe UI', system-ui, sans-serif;
     }
-    #yt-overlay.visible { display: flex; }
+    #yt-overlay.visible, #txt-overlay.visible { display: flex; }
 
-    #yt-popup {
+    #yt-popup, #txt-popup {
       background: #252525;
       border: 1px solid rgba(255,255,255,0.12);
       border-radius: 8px;
@@ -556,13 +556,13 @@
       gap: 12px;
     }
 
-    #yt-popup h3 {
+    #yt-popup h3, #txt-popup h3 {
       font-size: 13px;
       font-weight: 600;
       color: rgba(255,255,255,0.95);
     }
 
-    #yt-url-input {
+    #yt-url-input, #txt-input {
       height: 30px;
       background: rgba(255,255,255,0.06);
       border: 1px solid rgba(255,255,255,0.09);
@@ -575,7 +575,7 @@
       outline: none;
       width: 100%;
     }
-    #yt-url-input:focus { border-bottom-color: #60cdff; }
+    #yt-url-input:focus, #txt-input:focus { border-bottom-color: #60cdff; }
 
     #yt-err {
       font-size: 11px;
@@ -599,10 +599,10 @@
       border: 1px solid transparent;
     }
 
-    #yt-cancel-btn { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.09); color: rgba(255,255,255,0.9); }
-    #yt-cancel-btn:hover { background: rgba(255,255,255,0.1); }
-    #yt-play-btn   { background: #0067c0; color: #fff; }
-    #yt-play-btn:hover { background: #1975c9; }
+    #yt-cancel-btn, #txt-cancel-btn { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.09); color: rgba(255,255,255,0.9); }
+    #yt-cancel-btn:hover, #txt-cancel-btn:hover { background: rgba(255,255,255,0.1); }
+    #yt-play-btn, #txt-send-btn { background: #0067c0; color: #fff; }
+    #yt-play-btn:hover, #txt-send-btn:hover { background: #1975c9; }
   </style>
 </head>
 <body>
@@ -632,6 +632,7 @@
       <div class="row">
         <button class="btn btn-sm" data-key="KEY_GUIDE" onclick="sendKey('KEY_GUIDE')">GUIDE</button>
         <button class="btn btn-sm" data-key="KEY_123"   onclick="toggleNumpad()">123</button>
+        <button class="btn btn-sm" onclick="showTextDialog()" title="Type text on the TV">Aa</button>
       </div>
 
       <div class="row">
@@ -717,6 +718,18 @@
       <div class="yt-popup-actions">
         <button id="yt-cancel-btn">Cancel</button>
         <button id="yt-play-btn">Play</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="txt-overlay">
+    <div id="txt-popup">
+      <h3>Send text to TV</h3>
+      <input type="text" id="txt-input" placeholder="Focus a text field on the TV first"
+             autocomplete="off" spellcheck="false">
+      <div class="yt-popup-actions">
+        <button id="txt-cancel-btn">Cancel</button>
+        <button id="txt-send-btn">Send</button>
       </div>
     </div>
   </div>

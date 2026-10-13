@@ -25,6 +25,14 @@ function buildKeyCommand(key) {
   });
 }
 
+function buildTextCommand(text) {
+  const utf8 = unescape(encodeURIComponent(text)); // UTF-8 bytes as a binary string
+  return JSON.stringify({
+    method: 'ms.remote.control',
+    params: { Cmd: btoa(utf8), DataOfCmd: 'base64', TypeOfRemote: 'SendInputString' },
+  });
+}
+
 function parseYouTubeVideoId(input) {
   if (!input) return null;
   input = input.trim();
@@ -216,6 +224,41 @@ async function discoverTvs() {
 }
 
 // ── Numpad ────────────────────────────────────────────────────────────────────
+
+function sendText(text) {
+  if (!text || !ws || ws.readyState !== WebSocket.OPEN) return;
+  ws.send(buildTextCommand(text));
+}
+
+function showTextDialog() {
+  const overlay   = document.getElementById('txt-overlay');
+  const input     = document.getElementById('txt-input');
+  const sendBtn   = document.getElementById('txt-send-btn');
+  const cancelBtn = document.getElementById('txt-cancel-btn');
+
+  input.value = '';
+  overlay.classList.add('visible');
+  setTimeout(() => input.focus(), 40);
+
+  function submit() {
+    sendText(input.value);
+    close();
+  }
+
+  function close() {
+    overlay.classList.remove('visible');
+    sendBtn.onclick   = null;
+    cancelBtn.onclick = null;
+    input.onkeydown   = null;
+  }
+
+  sendBtn.onclick   = submit;
+  cancelBtn.onclick = close;
+  input.onkeydown   = e => {
+    if (e.key === 'Enter')  { e.preventDefault(); submit(); }
+    if (e.key === 'Escape') { e.preventDefault(); close(); }
+  };
+}
 
 function toggleNumpad() {
   const panel = document.getElementById('numpad');
@@ -520,5 +563,5 @@ if (typeof module !== 'undefined' && module.exports) {
   global.REGION_DEFAULTS = REGION_DEFAULTS;
   global.CC_TO_REGION    = CC_TO_REGION;
   global.REGIONS         = REGIONS;
-  module.exports = { attachLongPress };
+  module.exports = { attachLongPress, buildTextCommand };
 }

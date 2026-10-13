@@ -388,34 +388,34 @@
     .btn-reset-defaults:active { background: rgba(255,255,255,0.12); color: var(--text); }
 
     /* ── YouTube popup ───────────────────────────────────────────────────── */
-    #yt-overlay {
+    #yt-overlay, #txt-overlay {
       position: fixed; inset: 0; z-index: 200; display: none;
       align-items: flex-end; justify-content: center;
       background: rgba(0,0,0,0.6);
       padding-bottom: max(24px, env(safe-area-inset-bottom));
     }
-    #yt-overlay.visible { display: flex; }
-    #yt-popup {
+    #yt-overlay.visible, #txt-overlay.visible { display: flex; }
+    #yt-popup, #txt-popup {
       background: #252525; border-radius: 20px 20px 16px 16px;
       padding: 24px 24px 20px;
       width: min(480px, 100%); max-width: 100%;
       display: flex; flex-direction: column; gap: 14px;
     }
-    #yt-popup h3 { font-size: 17px; font-weight: 600; }
-    #yt-url-input {
+    #yt-popup h3, #txt-popup h3 { font-size: 17px; font-weight: 600; }
+    #yt-url-input, #txt-input {
       height: 46px; background: rgba(255,255,255,0.07);
       border: 1px solid rgba(255,255,255,0.1); border-bottom-color: rgba(255,255,255,0.4);
       border-radius: 10px; color: var(--text); font-size: 16px; padding: 0 14px; width: 100%;
     }
-    #yt-url-input:focus { border-bottom-color: var(--accent); outline: none; }
+    #yt-url-input:focus, #txt-input:focus { border-bottom-color: var(--accent); outline: none; }
     #yt-err { font-size: 13px; color: #f1665a; margin-top: -4px; }
     .yt-actions { display: flex; gap: 10px; justify-content: flex-end; }
     .yt-actions button {
       height: 44px; padding: 0 20px; border-radius: 12px;
       font-size: 15px; border: none; font-family: inherit;
     }
-    #yt-cancel-btn { background: rgba(255,255,255,0.09); color: var(--text); }
-    #yt-play-btn   { background: #0067c0; color: #fff; font-weight: 500; }
+    #yt-cancel-btn, #txt-cancel-btn { background: rgba(255,255,255,0.09); color: var(--text); }
+    #yt-play-btn, #txt-send-btn { background: #0067c0; color: #fff; font-weight: 500; }
   </style>
 </head>
 <body>
@@ -449,6 +449,7 @@
     <div class="row">
       <button class="btn btn-sm" data-key="KEY_GUIDE" onclick="sendKey('KEY_GUIDE')">GUIDE</button>
       <button class="btn btn-sm" data-key="KEY_123"   onclick="toggleNumpad()">123</button>
+      <button class="btn btn-sm" onclick="showTextDialog()">Aa</button>
       <button class="btn btn-sm"                       onclick="openAppModal()">Apps</button>
     </div>
 
@@ -562,6 +563,19 @@
       <div class="yt-actions">
         <button id="yt-cancel-btn">Cancel</button>
         <button id="yt-play-btn">Play</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Send-text popup -->
+  <div id="txt-overlay">
+    <div id="txt-popup">
+      <h3>Send text to TV</h3>
+      <input type="text" id="txt-input" placeholder="Focus a text field on the TV first"
+             autocomplete="off" spellcheck="false">
+      <div class="yt-actions">
+        <button id="txt-cancel-btn">Cancel</button>
+        <button id="txt-send-btn">Send</button>
       </div>
     </div>
   </div>

@@ -22,6 +22,7 @@ A Samsung smart TV remote control for Windows and iPhone, built with Electron an
 - **Mobile:** full-screen app modal with edit mode (reorder, remove, add from catalog or full Samsung DB), reset to defaults
 - YouTube deep-link: shift-click (desktop) or tap (mobile) the YouTube button to play a specific video by URL or ID
 - Numpad panel (toggleable)
+- **Type on TV** (Aa button): live-keys or send-whole-text entry, plus a trackpad to move/click the TV cursor
 - Media-key shortcuts (play/pause, volume, mute) registered as global shortcuts
 - Volume, channel, navigation, colour buttons, source, guide, captions, info, exit
 
@@ -118,6 +119,8 @@ preload.js                Context bridge for main window
 dialog-preload.js         Context bridge for IP-settings dialog
 app-manager-preload.js    Context bridge for app manager dialog
 ip-dialog.html            TV IP / discovery dialog
+text-dialog.html          "Type on TV" window: live keys, text entry, trackpad
+text-dialog-preload.js    Context bridge for the Type on TV window
 app/
   index.html              Desktop remote UI (also served as PWA fallback)
   remote.js               Desktop remote UI logic
@@ -128,12 +131,18 @@ app/
 samsung-apps-db.json      Full Samsung app database (4 320 apps, 18 regions)
 scripts/
   generate-icons.js       Icon generation from source PNG
+  release.js              Version bump + changelog roll + tag (npm run release)
   test-discovery.js       SSDP discovery probe (development utility)
 tests/
   unit/                   Jest unit tests
   blackbox/               Blackbox HTTP server tests
   e2e/                    Playwright layout tests
 ```
+
+## Development
+
+See [DEVELOPMENT.md](DEVELOPMENT.md) for running, testing, releases and packaging, and
+[CHANGELOG.md](CHANGELOG.md) for what changed in each version.
 
 ## License
 

@@ -12,22 +12,23 @@ const WIN_H          = 680;
 const WIN_H_NUMPAD   = 760;
 
 let mainWin;            // set once in app.whenReady()
+let _ignoring = true;      // whether the remote window is currently click-through
+let _pollerPaused = false; // true while a modal dialog overlaps the remote
 let _interactiveBounds; // set by renderer after layout, used by poller
 let _samsungDbCache = null; // loaded once on first /api/samsung-db request
 
 // Poll cursor position in main process — avoids IPC round-trip latency that
 // would cause setIgnoreMouseEvents(false) to arrive after mousedown.
 function startIgnoreMousePoller(win) {
-  let prev = true;
   setInterval(() => {
-    if (!win || win.isDestroyed() || win.isMinimized() || !_interactiveBounds) return;
+    if (_pollerPaused || !win || win.isDestroyed() || win.isMinimized() || !_interactiveBounds) return;
     const { x: mx, y: my } = screen.getCursorScreenPoint();
     const [wx, wy] = win.getPosition();
     const cx = mx - wx;
     const cy = my - wy;
     const b = _interactiveBounds;
     const inside = cx >= b.left && cx <= b.right && cy >= b.top && cy <= b.bottom;
-    if (inside === prev) { prev = !inside; win.setIgnoreMouseEvents(!inside, { forward: true }); }
+    if (inside === _ignoring) { _ignoring = !inside; win.setIgnoreMouseEvents(!inside, { forward: true }); }
   }, 16);
 }
 
@@ -307,6 +308,12 @@ ipcMain.handle('open-text-dialog', event => {
   });
   dlg.loadFile(path.join(__dirname, 'text-dialog.html'));
 
+  // The dialog overlaps the remote: keep the remote inert (click-through) and stop
+  // the poller from re-enabling its mouse handling while the cursor is over it.
+  _pollerPaused = true;
+  parentWin.setIgnoreMouseEvents(true, { forward: true });
+  _ignoring = true;
+
   const run = js => { if (!parentWin.isDestroyed()) parentWin.webContents.executeJavaScript(js).catch(() => {}); };
   const mine   = e => e.sender === dlg.webContents;
   const onText  = (e, text) => { if (mine(e)) run(`sendText(${JSON.stringify(String(text))}, true)`); };
@@ -325,6 +332,7 @@ ipcMain.handle('open-text-dialog', event => {
   ipcMain.on('text-dialog-end',       onEnd);
   ipcMain.on('text-dialog-close',     onClose);
   dlg.on('closed', () => {
+    _pollerPaused = false;
     ipcMain.removeListener('text-dialog-send-text', onText);
     ipcMain.removeListener('text-dialog-send-key',  onKey);
     ipcMain.removeListener('text-dialog-pointer',   onPtr);

@@ -36,7 +36,7 @@ jobs:
         run: npm ci
 
       - name: Build
-        run: npm run dist
+        run: npm run dist # build only; the release step below publishes
 
       - name: Extract release notes from CHANGELOG.md
         shell: bash

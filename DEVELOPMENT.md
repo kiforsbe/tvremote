@@ -80,6 +80,8 @@ publish it.
 ## Packaging
 
 Packaging is done by [electron-builder](https://www.electron.build/) via `npm run dist`
+(which passes `--publish never`: electron-builder must only build, never try to publish —
+it would demand a `GH_TOKEN`; the workflow publishes the release itself)
 (`npm run pack` builds an unpacked directory only, for quick inspection). Output goes to
 `dist/`:
 

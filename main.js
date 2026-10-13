@@ -287,7 +287,7 @@ ipcMain.handle('open-ip-dialog', (event, currentIp) => {
 
 ipcMain.handle('open-text-dialog', event => {
   const parentWin = BrowserWindow.fromWebContents(event.sender);
-  const W = 320, H = 320;
+  const W = 340, H = 480;
   // Center on the remote body (interactive bounds), falling back to the window.
   const [wx, wy] = parentWin.getPosition();
   const b = _interactiveBounds;

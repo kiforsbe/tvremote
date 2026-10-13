@@ -13,11 +13,10 @@
       background: #252525;
       display: flex; flex-direction: column; gap: 12px;
       padding: 18px 20px 16px;
-      -webkit-app-region: drag;
       user-select: none;
     }
     button, input { -webkit-app-region: no-drag; font-family: inherit; }
-    h3 { font-size: 13px; font-weight: 600; }
+    h3 { font-size: 13px; font-weight: 600; -webkit-app-region: drag; cursor: move; }
     .modes { display: flex; gap: 4px; }
     .modes button {
       flex: 1; height: 26px; border-radius: 4px; font-size: 12px;
@@ -44,12 +43,12 @@
     #send-btn:hover { background: #1975c9; }
     #send-btn[hidden] { display: none; }
     #pad {
-      flex: 1; border-radius: 6px; cursor: crosshair; touch-action: none;
+      flex: 1; min-height: 200px; border-radius: 6px; cursor: crosshair; touch-action: none;
       background: rgba(255,255,255,0.05); border: 1px dashed rgba(255,255,255,0.2);
       display: flex; align-items: center; justify-content: center;
       font-size: 12px; color: rgba(255,255,255,0.4); -webkit-app-region: no-drag;
     }
-    #pad:active { background: rgba(255,255,255,0.09); }
+    #pad.active { background: rgba(255,255,255,0.09); border-style: solid; }
     [hidden] { display: none !important; }
   </style>
 </head>
@@ -126,35 +125,45 @@
     input.oninput = () => { if (mode === 'live') api.sendText(input.value); };
 
     // ── Trackpad → absolute TV-screen coordinates ────────────
-    const TV_W = 1920, TV_H = 1080, SPEED = 3;
+    const TV_W = 1920, TV_H = 1080, SPEED = 2.5;
     let cx = TV_W / 2, cy = TV_H / 2;
-    let last = null, moved = 0, downAt = 0, lastSent = 0;
+    let moved = 0, downAt = 0, lastSent = 0;
 
-    pad.onpointerdown = e => {
+    // Pointer lock hides the real cursor and keeps delivering movement even when
+    // the drag leaves the pad, so nothing leaks to the windows underneath.
+    let locked = false, pressed = false;
+
+    pad.onmousedown = e => {
       if (e.button !== 0) return;
-      pad.setPointerCapture(e.pointerId);
-      last = { x: e.clientX, y: e.clientY };
+      pressed = true;
       moved = 0;
       downAt = Date.now();
+      pad.classList.add('active');
+      pad.requestPointerLock();
     };
-    pad.onpointermove = e => {
-      if (!last) return;
-      const dx = e.clientX - last.x, dy = e.clientY - last.y;
-      last = { x: e.clientX, y: e.clientY };
-      moved += Math.abs(dx) + Math.abs(dy);
-      cx = Math.max(0, Math.min(TV_W, cx + dx * SPEED));
-      cy = Math.max(0, Math.min(TV_H, cy + dy * SPEED));
+    document.addEventListener('pointerlockchange', () => {
+      locked = document.pointerLockElement === pad;
+      if (!locked && pressed) endDrag();   // lock lost (e.g. Esc) before mouseup
+      if (locked && !pressed) document.exitPointerLock(); // quick tap: released before lock engaged
+    });
+    document.addEventListener('mousemove', e => {
+      if (!locked) return;
+      moved += Math.abs(e.movementX) + Math.abs(e.movementY);
+      cx = Math.max(0, Math.min(TV_W, cx + e.movementX * SPEED));
+      cy = Math.max(0, Math.min(TV_H, cy + e.movementY * SPEED));
       const now = Date.now();
-      if (now - lastSent >= 30) { lastSent = now; api.pointer('Move', cx, cy); }
-    };
-    pad.onpointerup = () => {
-      if (!last) return;
-      last = null;
+      if (now - lastSent >= 16) { lastSent = now; api.pointer('Move', cx, cy); }
+    });
+    function endDrag() {
+      if (!pressed) return;
+      pressed = false;
+      pad.classList.remove('active');
       api.pointer('Move', cx, cy); // flush final position
       if (moved < 6 && Date.now() - downAt < 400) api.pointer('LeftClick');
-    };
+      if (document.pointerLockElement) document.exitPointerLock();
+    }
+    document.addEventListener('mouseup', e => { if (e.button === 0) endDrag(); });
     pad.oncontextmenu = e => { e.preventDefault(); api.pointer('RightClick'); };
-    window.addEventListener('keydown', e => { if (e.key === 'Escape') api.close(); });
 
     setMode(mode);
   </script>

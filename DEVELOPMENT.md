@@ -58,8 +58,9 @@ It never pushes. If the version appears anywhere else (for example a version bad
 download text in `README.md`), update it in the same release commit before tagging, or
 extend `scripts/release.js` to do so.
 
-The very first release can reuse the current version: `npm run release -- 1.0.0`
-(allowed because `v1.0.0` doesn't exist yet).
+`1.0.0` is already recorded in the changelog as the initial feature set but has no git tag
+yet; the next release (e.g. `npm run release -- minor` → 1.1.0) compares against `v1.0.0`.
+Tag the baseline commit (`git tag -a v1.0.0 <commit>`) if you want that link to resolve.
 
 ### 2. Publish
 

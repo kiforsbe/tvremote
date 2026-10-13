@@ -46,6 +46,8 @@
       "preload.js",
       "dialog-preload.js",
       "ip-dialog.html",
+      "text-dialog.html",
+      "text-dialog-preload.js",
       "app-manager-preload.js",
       "samsung-apps-db.json",
       "app/**"

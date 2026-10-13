@@ -285,6 +285,44 @@ ipcMain.handle('open-ip-dialog', (event, currentIp) => {
   });
 });
 
+ipcMain.handle('open-text-dialog', event => {
+  const parentWin = BrowserWindow.fromWebContents(event.sender);
+  const W = 320, H = 210;
+  // Center on the remote body (interactive bounds), falling back to the window.
+  const [wx, wy] = parentWin.getPosition();
+  const b = _interactiveBounds;
+  const cx = wx + (b ? (b.left + b.right)  / 2 : WIN_W / 2);
+  const cy = wy + (b ? (b.top  + b.bottom) / 2 : WIN_H / 2);
+
+  const dlg = new BrowserWindow({
+    width: W, height: H,
+    x: Math.round(cx - W / 2), y: Math.round(cy - H / 2),
+    parent: parentWin, modal: true, frame: false, resizable: false,
+    backgroundColor: '#252525',
+    webPreferences: {
+      nodeIntegration:  false,
+      contextIsolation: true,
+      preload:          path.join(__dirname, 'text-dialog-preload.js'),
+    },
+  });
+  dlg.loadFile(path.join(__dirname, 'text-dialog.html'));
+
+  const run = js => { if (!parentWin.isDestroyed()) parentWin.webContents.executeJavaScript(js).catch(() => {}); };
+  const mine   = e => e.sender === dlg.webContents;
+  const onText  = (e, text) => { if (mine(e)) run(`sendText(${JSON.stringify(String(text))}, true)`); };
+  const onKey   = (e, key)  => { if (mine(e)) run(`sendKey(${JSON.stringify(String(key))})`); };
+  const onClose = e         => { if (mine(e)) dlg.close(); };
+
+  ipcMain.on('text-dialog-send-text', onText);
+  ipcMain.on('text-dialog-send-key',  onKey);
+  ipcMain.on('text-dialog-close',     onClose);
+  dlg.on('closed', () => {
+    ipcMain.removeListener('text-dialog-send-text', onText);
+    ipcMain.removeListener('text-dialog-send-key',  onKey);
+    ipcMain.removeListener('text-dialog-close',     onClose);
+  });
+});
+
 ipcMain.handle('set-numpad', (event, open) => {
   const w = BrowserWindow.fromWebContents(event.sender);
   if (w) w.setSize(WIN_W, open ? WIN_H_NUMPAD : WIN_H);

@@ -356,82 +356,9 @@ function showYouTubeDialog(appId) {
   };
 }
 
-// Live mode: arrows/Enter go as remote keys; everything else is typed text.
-const LIVE_NAV_KEYS = {
-  Enter: 'KEY_ENTER', ArrowUp: 'KEY_UP', ArrowDown: 'KEY_DOWN',
-  ArrowLeft: 'KEY_LEFT', ArrowRight: 'KEY_RIGHT',
-};
-
 function sendText(text, allowEmpty = false) {
   if ((!text && !allowEmpty) || !ws || ws.readyState !== WebSocket.OPEN) return;
   ws.send(buildTextCommand(text));
-}
-
-function showTextDialog() {
-  const overlay   = document.getElementById('txt-overlay');
-  const input     = document.getElementById('txt-input');
-  const sendBtn   = document.getElementById('txt-send-btn');
-  const cancelBtn = document.getElementById('txt-cancel-btn');
-  const modeBtns  = overlay.querySelectorAll('[data-mode]');
-  const hint      = document.getElementById('txt-hint');
-
-  let mode = 'text';
-  try { mode = localStorage.getItem('txtmode') === 'live' ? 'live' : 'text'; } catch (_) {}
-
-  function setMode(m) {
-    mode = m;
-    try { localStorage.setItem('txtmode', m); } catch (_) {}
-    modeBtns.forEach(b => b.classList.toggle('active', b.dataset.mode === m));
-    sendBtn.hidden = m === 'live';
-    cancelBtn.textContent = m === 'live' ? 'Done' : 'Cancel';
-    hint.textContent = m === 'live'
-      ? 'The field is mirrored to the TV as you type. Arrows/Enter act as remote keys.'
-      : 'Edit freely, then Send to type the whole string on the TV.';
-    input.value = '';
-    input.focus();
-  }
-
-  overlay.classList.add('visible');
-  setOverlayOpen(true, overlay);
-  setMode(mode);
-  setTimeout(() => input.focus(), 40);
-
-  function submit() {
-    sendText(input.value);
-    close();
-  }
-
-  function close() {
-    overlay.classList.remove('visible');
-    setOverlayOpen(false);
-    sendBtn.onclick   = null;
-    cancelBtn.onclick = null;
-    input.onkeydown   = null;
-    input.oninput     = null;
-    modeBtns.forEach(b => { b.onclick = null; });
-  }
-
-  modeBtns.forEach(b => { b.onclick = () => setMode(b.dataset.mode); });
-  sendBtn.onclick   = submit;
-  cancelBtn.onclick = close;
-  input.onkeydown   = e => {
-    if (e.key === 'Escape') { e.preventDefault(); close(); return; }
-    if (mode === 'text') {
-      if (e.key === 'Enter') { e.preventDefault(); submit(); }
-      return;
-    }
-    const nav = LIVE_NAV_KEYS[e.key];
-    if (nav) {
-      e.preventDefault();
-      sendKey(nav);
-      if (e.key === 'Enter') input.value = '';
-    }
-  };
-  // Live mode mirrors the whole field to the TV on every change (soft
-  // keyboards report key "Unidentified" on keydown, so use input events).
-  input.oninput = () => {
-    if (mode === 'live') sendText(input.value, true); // empty clears the TV field
-  };
 }
 
 function toggleNumpad() {

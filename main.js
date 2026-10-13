@@ -311,7 +311,7 @@ ipcMain.handle('open-text-dialog', event => {
   // The dialog overlaps the remote: keep the remote inert (click-through) and stop
   // the poller from re-enabling its mouse handling while the cursor is over it.
   _pollerPaused = true;
-  parentWin.setIgnoreMouseEvents(true, { forward: true });
+  parentWin.setIgnoreMouseEvents(true); // no forward: the remote must not even see hover/mousemove
   _ignoring = true;
 
   const run = js => { if (!parentWin.isDestroyed()) parentWin.webContents.executeJavaScript(js).catch(() => {}); };
@@ -333,6 +333,7 @@ ipcMain.handle('open-text-dialog', event => {
   ipcMain.on('text-dialog-close',     onClose);
   dlg.on('closed', () => {
     _pollerPaused = false;
+    if (!parentWin.isDestroyed()) parentWin.setIgnoreMouseEvents(true, { forward: true });
     ipcMain.removeListener('text-dialog-send-text', onText);
     ipcMain.removeListener('text-dialog-send-key',  onKey);
     ipcMain.removeListener('text-dialog-pointer',   onPtr);

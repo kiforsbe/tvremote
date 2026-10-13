@@ -416,6 +416,15 @@
     }
     #yt-cancel-btn, #txt-cancel-btn { background: rgba(255,255,255,0.09); color: var(--text); }
     #yt-play-btn, #txt-send-btn { background: #0067c0; color: #fff; font-weight: 500; }
+
+    .txt-modes { display: flex; gap: 6px; }
+    .txt-modes button {
+      flex: 1; height: 38px; border-radius: 10px; font-family: inherit; font-size: 14px;
+      background: rgba(255,255,255,0.09); border: none; color: var(--text);
+    }
+    .txt-modes button.active { background: #0067c0; color: #fff; }
+    #txt-hint { font-size: 13px; color: rgba(255,255,255,0.55); margin-top: -4px; }
+    #txt-send-btn[hidden] { display: none; }
   </style>
 </head>
 <body>
@@ -570,7 +579,12 @@
   <!-- Send-text popup -->
   <div id="txt-overlay">
     <div id="txt-popup">
-      <h3>Send text to TV</h3>
+      <h3>Type on TV</h3>
+      <div class="txt-modes">
+        <button data-mode="live">Live keys</button>
+        <button data-mode="text">Text</button>
+      </div>
+      <div id="txt-hint"></div>
       <input type="text" id="txt-input" placeholder="Focus a text field on the TV first"
              autocomplete="off" spellcheck="false">
       <div class="yt-actions">

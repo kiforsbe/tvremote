@@ -225,6 +225,19 @@ async function discoverTvs() {
 
 // ── Numpad ────────────────────────────────────────────────────────────────────
 
+// Live mode: typed characters become individual TV key commands.
+function charToTvKey(ch) {
+  if (/^[a-z]$/i.test(ch)) return 'KEY_' + ch.toUpperCase();
+  if (/^[0-9]$/.test(ch))  return 'KEY_' + ch;
+  if (ch === ' ')          return 'KEY_SPACE';
+  return null;
+}
+
+const LIVE_NAV_KEYS = {
+  Enter: 'KEY_ENTER', ArrowUp: 'KEY_UP', ArrowDown: 'KEY_DOWN',
+  ArrowLeft: 'KEY_LEFT', ArrowRight: 'KEY_RIGHT', Backspace: 'KEY_BACKSPACE',
+};
+
 function sendText(text) {
   if (!text || !ws || ws.readyState !== WebSocket.OPEN) return;
   ws.send(buildTextCommand(text));
@@ -235,9 +248,27 @@ function showTextDialog() {
   const input     = document.getElementById('txt-input');
   const sendBtn   = document.getElementById('txt-send-btn');
   const cancelBtn = document.getElementById('txt-cancel-btn');
+  const modeBtns  = overlay.querySelectorAll('[data-mode]');
+  const hint      = document.getElementById('txt-hint');
 
-  input.value = '';
+  let mode = 'text';
+  try { mode = localStorage.getItem('txtmode') === 'live' ? 'live' : 'text'; } catch (_) {}
+
+  function setMode(m) {
+    mode = m;
+    try { localStorage.setItem('txtmode', m); } catch (_) {}
+    modeBtns.forEach(b => b.classList.toggle('active', b.dataset.mode === m));
+    sendBtn.hidden = m === 'live';
+    cancelBtn.textContent = m === 'live' ? 'Done' : 'Cancel';
+    hint.textContent = m === 'live'
+      ? 'Each keystroke is sent to the TV as a key press.'
+      : 'Edit freely, then Send to type the whole string on the TV.';
+    input.value = '';
+    input.focus();
+  }
+
   overlay.classList.add('visible');
+  setMode(mode);
   setTimeout(() => input.focus(), 40);
 
   function submit() {
@@ -250,13 +281,28 @@ function showTextDialog() {
     sendBtn.onclick   = null;
     cancelBtn.onclick = null;
     input.onkeydown   = null;
+    input.oninput     = null;
+    modeBtns.forEach(b => { b.onclick = null; });
   }
 
+  modeBtns.forEach(b => { b.onclick = () => setMode(b.dataset.mode); });
   sendBtn.onclick   = submit;
   cancelBtn.onclick = close;
   input.onkeydown   = e => {
-    if (e.key === 'Enter')  { e.preventDefault(); submit(); }
-    if (e.key === 'Escape') { e.preventDefault(); close(); }
+    if (e.key === 'Escape') { e.preventDefault(); close(); return; }
+    if (mode === 'text') {
+      if (e.key === 'Enter') { e.preventDefault(); submit(); }
+      return;
+    }
+    const nav = LIVE_NAV_KEYS[e.key];
+    if (nav) { e.preventDefault(); sendKey(nav); }
+  };
+  // Live mode characters come via input events (soft keyboards report key
+  // "Unidentified" on keydown). Backspace and Enter are handled in keydown.
+  input.oninput = e => {
+    if (mode !== 'live') return;
+    if (e.data) for (const ch of e.data) { const k = charToTvKey(ch); if (k) sendKey(k); }
+    input.value = '';
   };
 }
 
@@ -563,5 +609,5 @@ if (typeof module !== 'undefined' && module.exports) {
   global.REGION_DEFAULTS = REGION_DEFAULTS;
   global.CC_TO_REGION    = CC_TO_REGION;
   global.REGIONS         = REGIONS;
-  module.exports = { attachLongPress, buildTextCommand };
+  module.exports = { attachLongPress, buildTextCommand, charToTvKey };
 }

@@ -69,6 +69,18 @@ function withLinks(changelog, repoUrl) {
   return body + '\n' + links.join('\n') + '\n';
 }
 
+// The body of "## [version] ..." (without the heading), for GitHub release notes.
+function releaseNotes(changelog, version) {
+  const re = new RegExp(`^## \\[${version.replace(/\./g, '\\.')}\\][^\\n]*\\n`, 'm');
+  const m = re.exec(changelog);
+  if (!m) throw new Error(`CHANGELOG.md has no section for ${version}`);
+  const rest = changelog.slice(m.index + m[0].length);
+  const next = rest.search(/^(## \[|\[[^\]]+\]: )/m);
+  const notes = (next === -1 ? rest : rest.slice(0, next)).trim();
+  if (!hasEntries(notes)) throw new Error(`CHANGELOG.md section ${version} has no entries`);
+  return notes + '\n';
+}
+
 function setPackageVersion(pkgText, version) {
   return pkgText.replace(/("version":\s*")[^"]+(")/, `$1${version}$2`);
 }
@@ -87,6 +99,12 @@ function git(...args) {
 }
 
 function main(argv) {
+  // npm run release -- --notes <x.y.z>   prints that version's changelog section
+  if (argv[0] === '--notes') {
+    if (!SEMVER.test(argv[1] || '')) throw new Error('Usage: --notes <x.y.z>');
+    process.stdout.write(releaseNotes(fs.readFileSync(path.join(ROOT, 'CHANGELOG.md'), 'utf8'), argv[1]));
+    return;
+  }
   const flags  = argv.filter(a => a.startsWith('--'));
   const bump   = argv.find(a => !a.startsWith('--'));
   const dryRun = flags.includes('--dry-run');
@@ -135,4 +153,4 @@ if (require.main === module) {
   catch (e) { console.error(`release: ${e.message}`); process.exit(1); }
 }
 
-module.exports = { bumpVersion, unreleasedBody, hasEntries, rollChangelog, withLinks, setPackageVersion, setLockVersion };
+module.exports = { bumpVersion, unreleasedBody, hasEntries, rollChangelog, releaseNotes, withLinks, setPackageVersion, setLockVersion };

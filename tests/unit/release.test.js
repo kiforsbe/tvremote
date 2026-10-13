@@ -1,6 +1,6 @@
 // tests/unit/release.test.js
 const {
-  bumpVersion, unreleasedBody, hasEntries, rollChangelog, setPackageVersion, setLockVersion,
+  bumpVersion, unreleasedBody, hasEntries, rollChangelog, releaseNotes, setPackageVersion, setLockVersion,
 } = require('../../scripts/release.js');
 
 const REPO = 'https://github.com/x/y';
@@ -77,5 +77,15 @@ describe('version files', () => {
     const out = JSON.parse(setLockVersion(lock, '2.0.0'));
     expect(out.version).toBe('2.0.0');
     expect(out.packages[''].version).toBe('2.0.0');
+  });
+});
+
+describe('releaseNotes', () => {
+  test('returns only the requested version body', () => {
+    expect(releaseNotes(BASE, '1.0.0')).toBe('### Added\n- First.\n');
+  });
+  test('throws for a missing or empty section', () => {
+    expect(() => releaseNotes(BASE, '9.9.9')).toThrow(/no section/);
+    expect(() => releaseNotes('## [1.0.0] - x\n\n## [0.9.0] - y\n- a\n', '1.0.0')).toThrow(/no entries/);
   });
 });

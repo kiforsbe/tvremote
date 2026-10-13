@@ -72,7 +72,9 @@ gh workflow run release.yml -f tag=vx.y.z -f draft=false   # publish immediately
 
 The workflow ([.github/workflows/release.yml](.github/workflows/release.yml)) runs on
 `windows-latest`, checks out the tag, runs `npm ci` and `npm run dist`, and attaches
-`dist/*.exe` to a GitHub Release (notes auto-generated). Review the draft on GitHub and
+`dist/*.exe` to a GitHub Release. The release notes are the matching `## [x.y.z]` section of
+`CHANGELOG.md` (extracted by `node scripts/release.js --notes x.y.z`); the workflow fails if
+that section is missing or empty. Review the draft on GitHub and
 publish it.
 
 ## Packaging

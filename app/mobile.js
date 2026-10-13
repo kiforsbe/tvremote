@@ -225,21 +225,14 @@ async function discoverTvs() {
 
 // ── Numpad ────────────────────────────────────────────────────────────────────
 
-// Live mode: typed characters become individual TV key commands.
-function charToTvKey(ch) {
-  if (/^[a-z]$/i.test(ch)) return 'KEY_' + ch.toUpperCase();
-  if (/^[0-9]$/.test(ch))  return 'KEY_' + ch;
-  if (ch === ' ')          return 'KEY_SPACE';
-  return null;
-}
-
+// Live mode: arrows/Enter go as remote keys; everything else is typed text.
 const LIVE_NAV_KEYS = {
   Enter: 'KEY_ENTER', ArrowUp: 'KEY_UP', ArrowDown: 'KEY_DOWN',
-  ArrowLeft: 'KEY_LEFT', ArrowRight: 'KEY_RIGHT', Backspace: 'KEY_BACKSPACE',
+  ArrowLeft: 'KEY_LEFT', ArrowRight: 'KEY_RIGHT',
 };
 
-function sendText(text) {
-  if (!text || !ws || ws.readyState !== WebSocket.OPEN) return;
+function sendText(text, allowEmpty = false) {
+  if ((!text && !allowEmpty) || !ws || ws.readyState !== WebSocket.OPEN) return;
   ws.send(buildTextCommand(text));
 }
 
@@ -261,7 +254,7 @@ function showTextDialog() {
     sendBtn.hidden = m === 'live';
     cancelBtn.textContent = m === 'live' ? 'Done' : 'Cancel';
     hint.textContent = m === 'live'
-      ? 'Each keystroke is sent to the TV as a key press.'
+      ? 'The field is mirrored to the TV as you type. Arrows/Enter act as remote keys.'
       : 'Edit freely, then Send to type the whole string on the TV.';
     input.value = '';
     input.focus();
@@ -295,14 +288,16 @@ function showTextDialog() {
       return;
     }
     const nav = LIVE_NAV_KEYS[e.key];
-    if (nav) { e.preventDefault(); sendKey(nav); }
+    if (nav) {
+      e.preventDefault();
+      sendKey(nav);
+      if (e.key === 'Enter') input.value = '';
+    }
   };
-  // Live mode characters come via input events (soft keyboards report key
-  // "Unidentified" on keydown). Backspace and Enter are handled in keydown.
-  input.oninput = e => {
-    if (mode !== 'live') return;
-    if (e.data) for (const ch of e.data) { const k = charToTvKey(ch); if (k) sendKey(k); }
-    input.value = '';
+  // Live mode mirrors the whole field to the TV on every change (soft
+  // keyboards report key "Unidentified" on keydown, so use input events).
+  input.oninput = () => {
+    if (mode === 'live') sendText(input.value, true); // empty clears the TV field
   };
 }
 
@@ -609,5 +604,5 @@ if (typeof module !== 'undefined' && module.exports) {
   global.REGION_DEFAULTS = REGION_DEFAULTS;
   global.CC_TO_REGION    = CC_TO_REGION;
   global.REGIONS         = REGIONS;
-  module.exports = { attachLongPress, buildTextCommand, charToTvKey };
+  module.exports = { attachLongPress, buildTextCommand };
 }

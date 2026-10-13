@@ -80,14 +80,3 @@ describe('buildTextCommand', () => {
     expect(Buffer.from(params.Cmd, 'base64').toString('utf8')).toBe('åäö');
   });
 });
-
-describe('charToTvKey', () => {
-  const { charToTvKey } = require('../../app/remote.js');
-  test('maps letters, digits and space; ignores others', () => {
-    expect(charToTvKey('a')).toBe('KEY_A');
-    expect(charToTvKey('Z')).toBe('KEY_Z');
-    expect(charToTvKey('7')).toBe('KEY_7');
-    expect(charToTvKey(' ')).toBe('KEY_SPACE');
-    expect(charToTvKey('å')).toBeNull();
-  });
-});

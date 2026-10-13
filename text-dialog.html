@@ -32,13 +32,6 @@
       user-select: text;
     }
     #txt-input:focus { border-bottom-color: #60cdff; }
-    #live {
-      height: 30px; line-height: 28px; padding: 0 10px; border-radius: 4px;
-      background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.09);
-      border-bottom-color: #60cdff; white-space: nowrap; overflow: hidden;
-      text-overflow: ellipsis; direction: rtl; text-align: left;
-    }
-    #live.empty { color: rgba(255,255,255,0.4); direction: ltr; }
     .actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: auto; }
     .actions button {
       height: 28px; padding: 0 14px; border-radius: 4px; font-size: 13px; cursor: pointer;
@@ -68,7 +61,6 @@
   <div id="hint"></div>
   <input type="text" id="txt-input" placeholder="Focus a text field on the TV first"
          autocomplete="off" spellcheck="false">
-  <div id="live" hidden></div>
   <div id="pad">Trackpad — drag to move, tap to click, right-click to right-click</div>
   <div class="actions">
     <button id="cancel-btn">Cancel</button>
@@ -81,7 +73,6 @@
     const sendBtn   = document.getElementById('send-btn');
     const cancelBtn = document.getElementById('cancel-btn');
     const hint      = document.getElementById('hint');
-    const live      = document.getElementById('live');
     const modeBtns  = document.querySelectorAll('[data-mode]');
 
     // Live mode: arrows act as remote keys, Enter accepts the entry; everything else is typed text.
@@ -91,14 +82,10 @@
     };
 
     const pad = document.getElementById('pad');
-    // Live mode needs no focused field: keys are captured at the window level and
+    // Live mode has no field: keys are captured at the window level and
     // the whole buffer is mirrored to the TV on each change.
     let liveBuf = '';
-    function renderLive() {
-      live.textContent = liveBuf || 'Just start typing…';
-      live.classList.toggle('empty', !liveBuf);
-    }
-    function setLiveBuf(v) { liveBuf = v; renderLive(); api.sendText(v); }
+    function setLiveBuf(v) { liveBuf = v; api.sendText(v); }
 
     let mode = 'text';
     try { mode = localStorage.getItem('txtmode') === 'live' ? 'live' : 'text'; } catch (_) {}
@@ -110,13 +97,11 @@
       sendBtn.hidden = m === 'live';
       cancelBtn.textContent = m === 'live' ? 'Done' : 'Cancel';
       hint.textContent = m === 'live'
-        ? 'The field is mirrored to the TV as you type. Enter accepts; arrows act as remote keys.'
+        ? 'Just type — keys go straight to the TV. Enter accepts; arrows act as remote keys.'
         : 'Edit freely, then Send to type the whole string on the TV.';
       input.value = '';
       liveBuf = '';
-      renderLive();
       input.hidden = m === 'live';
-      live.hidden  = m !== 'live';
       if (m === 'text') input.focus();
     }
 

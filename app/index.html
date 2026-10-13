@@ -545,6 +545,7 @@
     #yt-overlay.visible, #txt-overlay.visible { display: flex; }
 
     #yt-popup, #txt-popup {
+      flex-shrink: 0; /* overlay is remote-width; popup is wider, so keep its size */
       background: #252525;
       border: 1px solid rgba(255,255,255,0.12);
       border-radius: 8px;

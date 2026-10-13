@@ -309,8 +309,14 @@ function sendInteractiveBounds() {
   window.electronAPI?.setInteractiveBounds({ left: r.left, top: r.top, right: r.right, bottom: r.bottom });
 }
 
-function setOverlayOpen(on) {
+function setOverlayOpen(on, overlay) {
   _overlayOpen = on;
+  if (on && overlay) {
+    // Center the popup on the remote body, not the (wider) transparent window.
+    const r = document.getElementById('remote-container').getBoundingClientRect();
+    overlay.style.left  = r.left + 'px';
+    overlay.style.right = (window.innerWidth - r.right) + 'px';
+  }
   sendInteractiveBounds();
 }
 
@@ -324,7 +330,7 @@ function showYouTubeDialog(appId) {
   input.value  = '';
   errEl.hidden = true;
   overlay.classList.add('visible');
-  setOverlayOpen(true);
+  setOverlayOpen(true, overlay);
   setTimeout(() => input.focus(), 40);
 
   function submit() {
@@ -386,7 +392,7 @@ function showTextDialog() {
   }
 
   overlay.classList.add('visible');
-  setOverlayOpen(true);
+  setOverlayOpen(true, overlay);
   setMode(mode);
   setTimeout(() => input.focus(), 40);
 
